@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS users (
   color_index INTEGER DEFAULT 0,
   configured BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  updated_at TIMESTAMP DEFAULT NOW(),
+  reset_at TIMESTAMP
 );
 
 -- Plans table (diet and workout plans)

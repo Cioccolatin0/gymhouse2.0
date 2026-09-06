@@ -1,5 +1,5 @@
 // Vercel API Route for Sgarro (Cheat Meals) Tracking
-import { createClient } from '@vercel/postgres';
+import { Pool } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -13,11 +13,10 @@ export default async function handler(req, res) {
   }
 
   const { email } = req.query;
-  const client = createClient();
+  const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
+  const client = await pool.connect();
 
   try {
-    await client.connect();
-
     if (req.method === 'GET') {
       const { rows } = await client.query(
         'SELECT food, quantity, time, date, timestamp FROM sgarri WHERE email = $1 ORDER BY timestamp DESC LIMIT 30',
@@ -53,6 +52,7 @@ export default async function handler(req, res) {
     console.error('Sgarro API error:', error);
     return res.status(500).json({ ok: false, message: 'Errore del database' });
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }

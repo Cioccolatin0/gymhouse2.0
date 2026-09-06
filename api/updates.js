@@ -1,5 +1,5 @@
 // Vercel API Route for Real-time Updates (Polling)
-import { createClient } from '@vercel/postgres';
+import { Pool } from '@neondatabase/serverless';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -16,11 +16,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, message: 'Method not allowed' });
   }
 
-  const client = createClient();
+  const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
+  const client = await pool.connect();
 
   try {
-    await client.connect();
-
     // Get latest notifications, videos, and programs
     const { rows: notifies } = await client.query(
       'SELECT title, body, date FROM notifications ORDER BY date DESC LIMIT 1'
@@ -44,6 +43,7 @@ export default async function handler(req, res) {
     console.error('Updates API error:', error);
     return res.status(500).json({ ok: false, message: 'Errore del database' });
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }

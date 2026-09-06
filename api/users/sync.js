@@ -1,5 +1,5 @@
 // Vercel API Route for Users Sync
-import { createClient } from '@vercel/postgres';
+import { Pool } from '@neondatabase/serverless';
 import crypto from 'crypto';
 
 export default async function handler(req, res) {
@@ -17,11 +17,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, message: 'Method not allowed' });
   }
 
-  const client = createClient();
+  const pool = new Pool({ connectionString: process.env.POSTGRES_URL });
+  const client = await pool.connect();
 
   try {
-    await client.connect();
-
     const { users } = req.body;
 
     if (!Array.isArray(users)) {
@@ -68,6 +67,7 @@ export default async function handler(req, res) {
     console.error('Users sync API error:', error);
     return res.status(500).json({ ok: false, message: 'Errore del database' });
   } finally {
-    await client.end();
+    client.release();
+    await pool.end();
   }
 }

@@ -8,6 +8,8 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "@vercel/postgres": "^0.5.0"
+    "@neondatabase/serverless": "^0.9.3",
+    "@vercel/blob": "^0.23.4",
+    "ws": "^8.18.0"
   }
 }
