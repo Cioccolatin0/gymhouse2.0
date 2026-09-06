@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "description": "Gym House - AI Fitness & Check-In",
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
-    "start": "vercel start"
+    "dev": "node server.js",
+    "build": "echo 'No build step required'",
+    "start": "node server.js"
   },
   "dependencies": {
     "@vercel/postgres": "^0.5.0"
