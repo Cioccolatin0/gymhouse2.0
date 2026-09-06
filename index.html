@@ -2426,6 +2426,8 @@
         async function attemptLogin() {
             try {
             await mergeServerUsersBeforeAuth();
+            ensureAdminProfile(); // make sure admin profile exists in authUsers, merged with server
+            loadAuth();
             const email = document.getElementById('auth-email-input').value.trim().toLocaleLowerCase();
             const pass = document.getElementById('auth-pass-input').value;
             if (!email || !pass) {
@@ -2433,20 +2435,47 @@
                 return;
             }
 
+            let adminLoginSuccess = false;
             if (loginMode === 'admin' || email === ADMIN_EMAIL) {
                 const adminHash = await hashPassword(pass, email);
                 if (adminHash === ADMIN_PASSWORD_HASH) {
-                    closeLoginModal();
-                    enterApp({ id: ADMIN_EMAIL, name: 'Admin', emoji: '🛡️', colorIndex: 0, credential: null });
-                    return;
-                }
-                if (loginMode === 'admin') {
+                    adminLoginSuccess = true;
+                } else if (loginMode === 'admin') {
                     showAlert("Accesso negato", "Credenziali amministratore errate.", true);
                     return;
                 }
             }
 
-            loadAuth();
+            if (adminLoginSuccess) {
+                // Admin password matched: use user profile stored in authUsers (possibly synced from server)
+                // so that custom admin name/emoji/color are respected instead of hardcoded defaults
+                closeLoginModal();
+                loadAuth();
+                let adminUser = authUsers.find(u => u.email === ADMIN_EMAIL);
+                if (!adminUser) {
+                    // Fallback (shouldn't happen because ensureAdminProfile ran)
+                    adminUser = {
+                        email: ADMIN_EMAIL, name: 'Admin', passwordHash: ADMIN_PASSWORD_HASH,
+                        emoji: '🛡️', colorIndex: 0, configured: true
+                    };
+                }
+                // Keep admin password hash always in sync with the hardcoded master hash
+                if (adminUser.passwordHash !== ADMIN_PASSWORD_HASH) {
+                    adminUser.passwordHash = ADMIN_PASSWORD_HASH;
+                    adminUser.configured = true;
+                    saveAuth();
+                    syncUsersToServer();
+                }
+                enterApp({
+                    id: adminUser.email,
+                    name: adminUser.name || 'Admin',
+                    emoji: adminUser.emoji || '🛡️',
+                    colorIndex: typeof adminUser.colorIndex === 'number' ? adminUser.colorIndex : 0,
+                    credential: adminUser.credential || null
+                });
+                return;
+            }
+
             const user = authUsers.find(u => u.email === email);
             if (!user) {
                 showAlert("Utente non trovato", "Questa email non è registrata. Contatta l'amministratore.", true);
@@ -3197,6 +3226,32 @@
             authUsers = Array.from(byEmail.values());
             syncProfiles();
             saveAuth();
+
+            // CRITICAL: also update the currently logged-in user object (currentUser)
+            // so name/emoji/color changes propagate to the live session UI
+            // without requiring logout + login
+            if (currentUser && currentUser.email) {
+                const fresh = authUsers.find(u => u.email === currentUser.email);
+                if (fresh) {
+                    let changed = false;
+                    if (fresh.name && fresh.name !== currentUser.name) {
+                        currentUser.name = fresh.name;
+                        changed = true;
+                    }
+                    if (fresh.emoji && fresh.emoji !== currentUser.emoji) {
+                        currentUser.emoji = fresh.emoji;
+                        changed = true;
+                    }
+                    if (typeof fresh.colorIndex === 'number' && Number(fresh.colorIndex) !== Number(currentUser.colorIndex)) {
+                        currentUser.colorIndex = fresh.colorIndex;
+                        changed = true;
+                    }
+                    if (changed) {
+                        try { renderHeaderUserChip(); } catch (e) {}
+                        try { if (typeof currentTab !== 'undefined' && currentTab === 'profile' && window.loadProfileTab) loadProfileTab(); } catch (e) {}
+                    }
+                }
+            }
             renderProfileList();
         }
 
