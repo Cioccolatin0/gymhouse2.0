@@ -1,0 +1,49 @@
+// Vercel API Route for Real-time Updates (Polling)
+import { createClient } from '@vercel/postgres';
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Key');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    return res.status(405).json({ ok: false, message: 'Method not allowed' });
+  }
+
+  const client = createClient();
+
+  try {
+    await client.connect();
+
+    // Get latest notifications, videos, and programs
+    const { rows: notifies } = await client.query(
+      'SELECT title, body, date FROM notifications ORDER BY date DESC LIMIT 1'
+    );
+    
+    const { rows: videos } = await client.query(
+      'SELECT url, title, date FROM videos ORDER BY date DESC LIMIT 1'
+    );
+    
+    const { rows: programs } = await client.query(
+      'SELECT title, body, date FROM programs ORDER BY date DESC LIMIT 1'
+    );
+
+    return res.status(200).json({
+      ok: true,
+      lastNotify: notifies[0] || null,
+      lastVideo: videos[0] || null,
+      lastProgram: programs[0] || null
+    });
+  } catch (error) {
+    console.error('Updates API error:', error);
+    return res.status(500).json({ ok: false, message: 'Errore del database' });
+  } finally {
+    await client.end();
+  }
+}

@@ -1,0 +1,3411 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Gym House - AI Fitness & Anti-Fake Access</title>
+    <meta name="theme-color" content="#09090b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GymHouse">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" type="image/png" href="/icon-192.png">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- QRCode JS Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- HTML5 QR Code Scanner -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <style>
+        /* Mobile-only Liquid Glass Aesthetics */
+        .liquid-glass-mobile {
+            background: rgba(18, 18, 22, 0.75);
+            backdrop-filter: blur(28px) saturate(210%);
+            -webkit-backdrop-filter: blur(28px) saturate(210%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .light .liquid-glass-mobile {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(28px) saturate(200%);
+            -webkit-backdrop-filter: blur(28px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2), inset 0 1px 2px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        /* Glass Panel for cards */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .glass-panel {
+            background: rgba(24, 24, 27, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Styling custom select dropdowns */
+        .custom-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%206366f1' stroke-width='2.5'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.85rem center;
+            background-size: 1.1rem;
+            padding-right: 2.5rem;
+        }
+
+        .custom-select option {
+            background-color: #18181b !important;
+            color: #f4f4f5 !important;
+            padding: 12px;
+        }
+
+        .light .custom-select option {
+            background-color: #ffffff !important;
+            color: #09090b !important;
+        }
+
+        .glass-button {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+        }
+
+        .glass-button:active {
+            transform: translateY(1px);
+        }
+
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+        .pt-safe { padding-top: env(safe-area-inset-top, 1rem); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 9999px; }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; filter: blur(30px); }
+            50% { opacity: 0.6; filter: blur(45px); }
+        }
+
+        .bg-glow { animation: pulse-glow 8s infinite alternate ease-in-out; }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 min-h-screen font-sans antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-300 relative overflow-x-hidden">
+
+    <!-- Background Animated Blobs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/15 dark:bg-indigo-600/20 bg-glow pointer-events-none z-0"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-purple-500/15 dark:bg-purple-600/15 bg-glow pointer-events-none z-0" style="animation-delay: -4s;"></div>
+
+    <div class="relative z-10 flex flex-col min-h-screen max-w-md mx-auto sm:max-w-xl md:max-w-4xl lg:max-w-5xl">
+        
+        <!-- HEADER (Standard layout without liquid glass on desktop) -->
+        <header class="sticky top-0 z-40 px-4 md:px-6 pt-safe pt-3 pb-3 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 md:rounded-b-2xl">
+            <div class="flex items-center justify-between">
+                
+                <!-- Logo & Brand -->
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                        <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-extrabold text-lg leading-tight tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-white dark:to-zinc-300 bg-clip-text text-transparent">GYM HOUSE</h1>
+                        <p class="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold tracking-wider uppercase">AI Fitness & GPS Access</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Menu (VISIBLE ONLY ON MD & UP >= 768px - NO LIQUID GLASS) -->
+                <nav class="hidden md:flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800/80 p-1.5 rounded-xl border border-zinc-200 dark:border-zinc-700">
+                    <button onclick="switchTab('diet')" id="desk-nav-diet" class="desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-900 shadow-sm flex items-center gap-2">
+                        <i data-lucide="utensils" class="w-4 h-4"></i>
+                        <span>Dieta AI</span>
+                    </button>
+                    <button onclick="switchTab('workout')" id="desk-nav-workout" class="desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2">
+                        <i data-lucide="dumbbell" class="w-4 h-4"></i>
+                        <span>Scheda Home Gym</span>
+                    </button>
+                    <button onclick="switchTab('plans')" id="desk-nav-plans" class="desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2">
+                        <i data-lucide="folder" class="w-4 h-4"></i>
+                        <span>I Miei Piani</span>
+                    </button>
+                    <button onclick="switchTab('checkin')" id="desk-nav-checkin" class="desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2">
+                        <i data-lucide="qr-code" class="w-4 h-4"></i>
+                        <span>Check-In</span>
+                    </button>
+
+                    <button onclick="switchTab('profile')" id="desk-nav-profile" class="desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2">
+                        <i data-lucide="user-cog" class="w-4 h-4"></i>
+                        <span>Profilo</span>
+                    </button>
+                </nav>
+
+                <!-- Header Actions -->
+                <div class="flex items-center gap-2">
+                    <button id="pwa-install-btn" class="hidden text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold px-3 py-1.5 rounded-xl border border-indigo-500/20 hover:bg-indigo-500/20 transition-all flex items-center gap-1">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> App
+                    </button>
+
+                    <div id="header-user-chip" class="hidden items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 rounded-xl pl-1 pr-1 py-1 cursor-pointer" title="Il mio profilo" onclick="switchTab('profile')">
+                        <span id="header-user-avatar" class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-sm"></span>
+                        <span id="header-user-name" class="text-[11px] font-bold max-w-[70px] truncate hidden sm:block"></span>
+                        <button onclick="event.stopPropagation(); logoutUser()" class="p-1 rounded-lg text-zinc-500 hover:text-rose-500 transition-all" title="Esci / Cambia profilo">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+
+                    <button onclick="openApiKeyModal()" id="api-key-btn" class="hidden p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all relative border border-zinc-200 dark:border-zinc-700" title="Imposta le chiavi (solo admin)">
+                        <i data-lucide="key" class="w-4 h-4"></i>
+                        <span id="api-key-status-dot" class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-slate-100 dark:border-zinc-950"></span>
+                    </button>
+
+                    <button onclick="toggleTheme()" class="p-2 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-all border border-zinc-200 dark:border-zinc-700" title="Cambia Tema">
+                        <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                        <i data-lucide="moon" class="w-4 h-4 block dark:hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 px-4 md:px-6 pt-5 pb-28 md:pb-10 z-10">
+
+            <!-- TAB 1: DIETA AI -->
+            <section id="tab-diet" class="tab-content space-y-5">
+                
+                <!-- BMI Banner -->
+                <div class="glass-panel rounded-3xl p-5 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-indigo-600 dark:text-indigo-400 font-bold">I Tuoi Dati Corporei</span>
+                            <h2 class="text-xl font-bold">Calcolo BMI & Fabbisogno</h2>
+                        </div>
+                        <span id="bmi-badge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300">
+                            Inserisci Dati
+                        </span>
+                    </div>
+
+                    <!-- Inputs Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div>
+                            <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Peso (kg)</label>
+                            <input type="number" id="user-weight" value="75" onchange="calculateBMI()" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Altezza (cm)</label>
+                            <input type="number" id="user-height" value="175" onchange="calculateBMI()" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Età</label>
+                            <input type="number" id="user-age" value="28" onchange="calculateBMI()" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Sesso</label>
+                            <select id="user-gender" onchange="calculateBMI()" class="custom-select w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="Uomo">Uomo</option>
+                                <option value="Donna">Donna</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- BMI Visual Gauge -->
+                    <div class="mt-3">
+                        <div class="flex justify-between text-[10px] text-zinc-400 font-semibold mb-1">
+                            <span>Sottopeso (&lt;18.5)</span>
+                            <span>Normo (18.5-24.9)</span>
+                            <span>Sovrappeso (25-29.9)</span>
+                            <span>Obeso (&gt;30)</span>
+                        </div>
+                        <div class="w-full h-3 bg-zinc-200 dark:bg-zinc-800 rounded-full overflow-hidden relative flex">
+                            <div class="w-1/4 h-full bg-blue-400"></div>
+                            <div class="w-1/4 h-full bg-emerald-400"></div>
+                            <div class="w-1/4 h-full bg-amber-400"></div>
+                            <div class="w-1/4 h-full bg-rose-500"></div>
+                            <div id="bmi-indicator" class="absolute top-0 bottom-0 w-2.5 bg-slate-900 dark:bg-white rounded-full transition-all duration-500 shadow-md" style="left: 0%;"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <p id="bmi-value-text" class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">BMI: <span class="font-bold text-indigo-500">24.5</span></p>
+                            <p id="bmr-tdee-text" class="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">TDEE stimato: ~2300 kcal</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diet Preferences & Dropdowns Form -->
+                <div class="glass-panel rounded-3xl p-5 space-y-4">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i data-lucide="utensils" class="w-4 h-4 text-indigo-500"></i> Impostazioni Nutrizione
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Obiettivo Nutrizionale</label>
+                            <select id="diet-goal" class="custom-select w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="Dimagrimento / Definizone (Deficit calorico)">Dimagrimento / Definizione</option>
+                                <option value="Mantenimento Peso & Riconversione">Mantenimento Peso</option>
+                                <option value="Ipertrofia / Masa Muscolare (Surplus calorico)" selected>Ipertrofia / Massa Muscolare</option>
+                                <option value="Dieta Accessibile & Non Impegnativa">Dieta Accessibile & Non Impegnativa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Frequenza Pasti</label>
+                            <select id="diet-meals-count" class="custom-select w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="3 Pasti (Colazione, Pranzo, Cena)">3 Pasti Principali</option>
+                                <option value="4 Pasti (Colazione, Pranzo, Spuntino, Cena)" selected>4 Pasti (incluso Spuntino)</option>
+                                <option value="4 Pasti (Colazione, Pranzo, Spuntino Scuola, Cena)">4 Pasti (con Spuntino Scuola)</option>
+                                <option value="5 Pasti (Colazione, Spuntino, Pranzo, Merenda, Cena)">5 Pasti (Con Pre/Post Workout)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Import Dieta Esistente -->
+                    <div class="rounded-2xl bg-indigo-500/5 border border-indigo-500/20 p-4">
+                        <div class="flex items-center gap-2 mb-3">
+                            <i data-lucide="upload" class="w-4 h-4 text-indigo-500"></i>
+                            <label class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase">Hai già una dieta?</label>
+                        </div>
+                        <p class="text-[11px] text-zinc-500 dark:text-zinc-400 mb-3">Carica un PDF o immagine della tua dieta esistente per importarla.</p>
+                        <div class="flex gap-2">
+                            <input type="file" id="diet-import-file" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="handleDietImport(event)">
+                            <button onclick="document.getElementById('diet-import-file').click()" class="flex-1 py-2.5 px-3 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-xs font-semibold text-zinc-700 dark:text-zinc-300 hover:border-indigo-500 transition-all flex items-center justify-center gap-2">
+                                <i data-lucide="file-up" class="w-3.5 h-3.5"></i> Seleziona File
+                            </button>
+                        </div>
+                        <div id="diet-import-status" class="hidden mt-2 text-[10px] text-zinc-500 dark:text-zinc-400"></div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Alimenti Esclusi o Intolleranze</label>
+                        <input type="text" id="diet-excluded" placeholder="Es: Lattosio, Glutine, Pesce, Melanzane..." class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                    </div>
+
+                    <button onclick="generateDietAI()" class="w-full py-3.5 px-4 rounded-xl glass-button text-white font-bold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Genera Piano Alimentare AI
+                    </button>
+                </div>
+
+                <!-- Diet Output -->
+                <div id="diet-result-container" class="hidden glass-panel rounded-3xl p-5 space-y-4">
+                    <div class="flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                        <h3 class="font-bold text-base text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                            <i data-lucide="apple" class="w-5 h-5"></i> La Tua Dieta Su Misura
+                        </h3>
+                        <button onclick="copyToClipboard('diet-content')" class="text-xs bg-zinc-200/60 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl flex items-center gap-1 font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copia
+                        </button>
+                    </div>
+                    <div id="diet-content" class="text-sm space-y-3 leading-relaxed text-zinc-800 dark:text-zinc-200"></div>
+                </div>
+
+                <!-- Sgarro (Cheat Meal) Tracker -->
+                <div class="glass-panel rounded-3xl p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-base font-bold flex items-center gap-2">
+                            <i data-lucide="pizza" class="w-4 h-4 text-rose-500"></i> Tracker Sgarri
+                        </h3>
+                        <span id="sgarro-count-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">0 questa settimana</span>
+                    </div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Registra quando mangi qualcosa di diverso dalla tua dieta. L'AI analizzerà l'impatto.</p>
+
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Cosa hai mangiato?</label>
+                            <textarea id="sgarro-food" rows="2" placeholder="Es: Pizza margherita, 3 fette, con coca-cola..." class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white resize-none"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Quantità approssimativa</label>
+                                <input type="text" id="sgarro-quantity" placeholder="Es: 500g, 2 porzioni" class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Ora</label>
+                                <input type="time" id="sgarro-time" class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500 text-slate-900 dark:text-white">
+                            </div>
+                        </div>
+                        <button onclick="recordSgarro()" class="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-orange-500 text-white font-bold text-sm shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 hover:opacity-90 transition-all">
+                            <i data-lucide="plus-circle" class="w-4 h-4"></i> Registra Sgarro
+                        </button>
+                    </div>
+
+                    <!-- AI Analysis Result -->
+                    <div id="sgarro-ai-result" class="hidden rounded-2xl bg-gradient-to-r from-rose-500/10 to-orange-500/10 border border-rose-500/20 p-4">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 rounded-xl bg-rose-500/20 text-rose-600 dark:text-rose-400">
+                                <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-xs font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400 mb-1">Analisi AI</h4>
+                                <p id="sgarro-ai-text" class="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sgarro History -->
+                    <div id="sgarro-history-container" class="hidden">
+                        <h4 class="text-xs font-extrabold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3 flex items-center gap-2">
+                            <i data-lucide="history" class="w-3.5 h-3.5"></i> Storico Sgarri
+                        </h4>
+                        <div id="sgarro-history-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: SCHEDA HOME GYM AI -->
+            <section id="tab-workout" class="tab-content space-y-5 hidden">
+                
+                <!-- Smart AI BMI Recommendation Banner -->
+                <div class="glass-panel rounded-3xl p-5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border-indigo-500/20">
+                    <div class="flex items-start gap-3">
+                        <div class="p-2.5 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 mt-0.5">
+                            <i data-lucide="brain-circuit" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">Consiglio Personalizzato AI</h4>
+                            <p id="workout-ai-advice" class="text-xs mt-1 text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                                Calcolo in corso...
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipment & Workout Config -->
+                <div class="glass-panel rounded-3xl p-5 space-y-4">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i data-lucide="building" class="w-4 h-4 text-indigo-500"></i> Attrezzatura Gym House
+                    </h3>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1">
+                        <i data-lucide="lock" class="w-3 h-3"></i> Configurata SOLO dall'amministratore.
+                    </p>
+
+                    <!-- Equipment Chips (read-only) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="equipment-chips">
+                        <!-- Chips inserted dynamically via JS -->
+                    </div>
+
+                    <!-- Dropdowns Config Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Giorni a Settimana</label>
+                            <select id="workout-days" class="custom-select w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="2 Giorni (Full Body)">2 Giorni (Full Body)</option>
+                                <option value="3 Giorni (Push / Pull / Legs)" selected>3 Giorni (PPL Split)</option>
+                                <option value="4 Giorni (Upper / Lower)">4 Giorni (Upper/Lower)</option>
+                                <option value="5 Giorni (Split per Gruppo Muscolare)">5 Giorni (Intensiva)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Durata Allenamento</label>
+                            <select id="workout-duration" class="custom-select w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="30-45 minuti">30 - 45 min</option>
+                                <option value="45-60 minuti" selected>45 - 60 min</option>
+                                <option value="60-75 minuti">60 - 75 min</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Livello Esp.</label>
+                            <select id="workout-level" class="custom-select w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                                <option value="Principiante">Principiante</option>
+                                <option value="Intermedio" selected>Intermedio</option>
+                                <option value="Avanzato">Avanzato</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="generateWorkoutAI()" class="w-full py-3.5 px-4 rounded-xl glass-button text-white font-bold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Genera Scheda Allenamento AI
+                    </button>
+                </div>
+
+                <!-- Workout Output -->
+                <div id="workout-result-container" class="hidden glass-panel rounded-3xl p-5 space-y-4">
+                    <div class="flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800 pb-3">
+                        <h3 class="font-bold text-base text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                            <i data-lucide="clipboard-list" class="w-5 h-5"></i> La Tua Scheda Home Gym
+                        </h3>
+                        <button onclick="copyToClipboard('workout-content')" class="text-xs bg-zinc-200/60 dark:bg-zinc-800/80 px-3 py-1.5 rounded-xl flex items-center gap-1 font-bold hover:bg-indigo-500 hover:text-white transition-all">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copia
+                        </button>
+                    </div>
+                    <div id="workout-content" class="text-sm space-y-3 leading-relaxed text-zinc-800 dark:text-zinc-200"></div>
+                </div>
+            </section>
+
+            <!-- TAB 3: I MIEI PIANI (DIETA & SCHEDA SALVATE) -->
+            <section id="tab-plans" class="tab-content space-y-5 hidden">
+                <div class="glass-panel rounded-3xl p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-base font-bold flex items-center gap-2">
+                            <i data-lucide="folder" class="w-4 h-4 text-indigo-500"></i> I Miei Piani Salvati
+                        </h3>
+                        <span id="plans-user-badge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20"></span>
+                    </div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Di seguito i piani generati e salvati per il tuo profilo.</p>
+
+                    <!-- Saved Diet -->
+                    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                        <div class="flex justify-between items-center p-3.5 bg-zinc-100/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-700">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                                <i data-lucide="apple" class="w-3.5 h-3.5"></i> La Tua Dieta
+                            </h4>
+                            <span id="plans-diet-date" class="text-[10px] font-mono text-zinc-500"></span>
+                        </div>
+                        <div id="plans-diet-content" class="p-4 text-sm space-y-3 leading-relaxed text-zinc-800 dark:text-zinc-200"></div>
+                    </div>
+
+                    <!-- Saved Workout -->
+                    <div class="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                        <div class="flex justify-between items-center p-3.5 bg-zinc-100/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-700">
+                            <h4 class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                                <i data-lucide="clipboard-list" class="w-3.5 h-3.5"></i> La Tua Scheda
+                            </h4>
+                            <span id="plans-workout-date" class="text-[10px] font-mono text-zinc-500"></span>
+                        </div>
+                        <div id="plans-workout-content" class="p-4 text-sm space-y-3 leading-relaxed text-zinc-800 dark:text-zinc-200"></div>
+                    </div>
+
+                    <button onclick="switchTab('diet')" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                        <i data-lucide="sparkles" class="w-4 h-4"></i> Genera Nuovo Piano
+                    </button>
+                </div>
+            </section>
+
+            <!-- TAB: PROFILO (modifica nome/avatar/colore + pannello admin) -->
+            <section id="tab-profile" class="tab-content space-y-5 hidden">
+                <div class="glass-panel rounded-3xl p-5 space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span id="profile-edit-avatar-big" class="w-14 h-14 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-2xl shadow-lg flex-shrink-0"></span>
+                        <div class="min-w-0">
+                            <p id="profile-edit-email" class="text-xs font-mono text-zinc-500 dark:text-zinc-400 truncate"></p>
+                            <h3 class="font-bold text-base">Modifica il tuo profilo</h3>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Nome</label>
+                        <input type="text" id="profile-edit-name" maxlength="16" placeholder="Il tuo nome"
+                            class="mt-1.5 w-full rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-3.5 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all">
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Avatar</label>
+                        <div id="profile-edit-avatar-picker" class="grid grid-cols-6 gap-2 mt-2"></div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Colore</label>
+                        <div id="profile-edit-color-picker" class="flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
+                    <button onclick="saveProfileEdit()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i> Salva Modifiche
+                    </button>
+
+                    <button onclick="logoutUser()" class="w-full py-3 rounded-xl border border-rose-500/30 bg-rose-500/5 text-rose-500 hover:bg-rose-500/10 font-bold text-sm flex items-center justify-center gap-2 transition-all">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Cambia profilo / Esci
+                    </button>
+                </div>
+
+                <div id="profile-admin-card" class="hidden rounded-3xl border border-indigo-500/25 bg-indigo-500/5 p-5 space-y-3">
+                    <h4 class="text-sm font-extrabold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                        <i data-lucide="shield" class="w-4 h-4"></i> Pannello Amministratore
+                    </h4>
+                    <p class="text-[11px] text-zinc-500 dark:text-zinc-400">Gestisci gli utenti (crea, reimposta password, elimina) e invia notifiche o video a tutti i connessi in tempo reale.</p>
+                    <button onclick="openAdminPanel()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                        <i data-lucide="settings" class="w-4 h-4"></i> Apri Pannello Admin
+                    </button>
+                    <p class="text-[10px] text-zinc-400 dark:text-zinc-500">Visibile solo all'amministratore.</p>
+                </div>
+            </section>
+
+            <!-- TAB 4: CHECK-IN QR CODE FISSO & GEOFENCING ANTI-FAKE -->
+            <section id="tab-checkin" class="tab-content space-y-5 hidden">
+                
+                <!-- Toggle Mode: Socio Scanner vs Admin Printable QR -->
+                <div class="flex p-1.5 bg-zinc-200/80 dark:bg-zinc-900/90 rounded-2xl border border-zinc-300 dark:border-zinc-800">
+                    <button id="mode-scanner-btn" onclick="switchCheckinMode('scanner')" class="flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                        Scansiona QR & Check-In
+                    </button>
+                    <button id="mode-generator-btn" onclick="switchCheckinMode('generator')" class="flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all text-zinc-500 hover:text-zinc-900 dark:hover:text-white">
+                        QR Fisso da Stampare
+                    </button>
+                </div>
+
+                <!-- Scanner View (Per il Socio che entra) -->
+                <div id="checkin-scanner-view" class="glass-panel rounded-3xl p-6 space-y-4">
+                    <div class="text-center">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 mb-2">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> PROTEZIONE GPS ATTIVA
+                        </span>
+                        <h3 class="text-lg font-bold">Check-in Ingresso Gym House</h3>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                            Inquadra il QR Code fisso stampato all'ingresso. Il sistema verificherà la tua posizione GPS per autorizzare l'accesso.
+                        </p>
+                    </div>
+
+                    <!-- Scanner Box -->
+                    <div class="relative overflow-hidden rounded-2xl border-2 border-dashed border-indigo-500/30 bg-zinc-900 min-h-[240px] flex items-center justify-center">
+                        <div id="reader" class="w-full"></div>
+                    </div>
+
+                    <!-- Quick Actions for Mobile -->
+                    <div class="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                        <button onclick="performGpsCheckin(FIXED_PRINTABLE_QR_URL)" class="py-3 px-4 rounded-xl glass-button text-white font-bold text-xs shadow flex items-center justify-center gap-2">
+                            <i data-lucide="map-pin" class="w-4 h-4"></i> Verifica GPS
+                        </button>
+                        <button onclick="showQrCodeForSharing()" class="py-3 px-4 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-bold text-xs flex items-center justify-center gap-2">
+                            <i data-lucide="share-2" class="w-4 h-4"></i> Condividi QR
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Printable Generator View (Per la Palestra / Stampa) -->
+                <div id="checkin-generator-view" class="glass-panel rounded-3xl p-6 text-center space-y-4 hidden">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-extrabold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i> CODICE FISSO IMMUTABILE
+                        </span>
+                        <h3 class="text-lg font-bold mt-2">QR Code Ufficiale Gym House</h3>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                            Stampa questo QR Code e posizionalo alla reception. Non cambia mai.
+                        </p>
+                    </div>
+
+                    <!-- QR Display Box -->
+                    <div class="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-inner inline-block mx-auto border border-zinc-200">
+                        <div id="qrcode-box" class="w-48 h-48 flex items-center justify-center"></div>
+                    </div>
+
+                    <p class="text-[11px] text-zinc-500 font-mono break-all" id="fixed-url-text">URL: /checkin</p>
+
+                    <button onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-xs font-bold hover:bg-zinc-300 transition-all flex items-center justify-center gap-2 mx-auto">
+                        <i data-lucide="printer" class="w-4 h-4"></i> Stampa QR Code
+                    </button>
+                </div>
+
+                <!-- Check-in Success Banner -->
+                <div id="checkin-success-modal" class="hidden glass-panel rounded-3xl p-5 border-2 border-emerald-500/50 bg-emerald-500/10 text-center space-y-2">
+                    <div class="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
+                        <i data-lucide="check" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-lg font-extrabold text-emerald-600 dark:text-emerald-400">CHECK-IN CONFERMATO!</h4>
+                    <p class="text-xs text-zinc-600 dark:text-zinc-300">Posizione GPS verificata. Benvenuto in Gym House!</p>
+                    <span id="checkin-time-badge" class="inline-block text-xs font-mono font-bold bg-white/60 dark:bg-zinc-900/60 px-3 py-1 rounded-full text-emerald-700 dark:text-emerald-300"></span>
+                </div>
+
+                <!-- Access History -->
+                <div class="glass-panel rounded-3xl p-5 space-y-3">
+                    <div class="flex justify-between items-center">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                            <i data-lucide="history" class="w-4 h-4"></i> Storico Ingressi Recenti
+                        </h4>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openAdminLogin()" class="text-[10px] text-indigo-500 hover:underline font-bold flex items-center gap-1">
+                                <i data-lucide="users" class="w-3 h-3"></i> Profili
+                            </button>
+                            <button onclick="clearCheckinHistory()" class="text-[10px] text-rose-500 hover:underline font-bold">Cancella</button>
+                        </div>
+                    </div>
+                    <div id="checkin-history-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <!-- History items generated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- MOBILE-ONLY LIQUID GLASS FLOATING NAVBAR (HIDDEN ON DESKTOP md:hidden) -->
+        <nav class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-sm">
+            <div class="liquid-glass-mobile rounded-3xl p-2 flex justify-around items-center">
+                
+                <button onclick="switchTab('diet')" id="nav-diet" class="nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-white/60 dark:bg-white/10 shadow-sm transition-all">
+                    <i data-lucide="utensils" class="w-5 h-5"></i>
+                    <span>Dieta AI</span>
+                </button>
+
+                <button onclick="switchTab('workout')" id="nav-workout" class="nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all">
+                    <i data-lucide="dumbbell" class="w-5 h-5"></i>
+                    <span>Scheda AI</span>
+                </button>
+
+                <button onclick="switchTab('plans')" id="nav-plans" class="nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all">
+                    <i data-lucide="folder" class="w-5 h-5"></i>
+                    <span>Piani</span>
+                </button>
+
+                <button onclick="switchTab('checkin')" id="nav-checkin" class="nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all">
+                    <i data-lucide="qr-code" class="w-5 h-5"></i>
+                    <span>Check-in</span>
+                </button>
+
+                <button onclick="switchTab('profile')" id="nav-profile" class="nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all">
+                    <i data-lucide="user-cog" class="w-5 h-5"></i>
+                    <span>Profilo</span>
+                </button>
+
+            </div>
+        </nav>
+    </div>
+
+    <!-- Profile Picker Modal (Netflix Style) -->
+    <div id="profile-picker-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="font-extrabold text-lg tracking-tight">Chi sta entrando?</h3>
+                <button onclick="closeProfilePicker()" class="text-zinc-500 hover:text-white p-1.5 rounded-full hover:bg-zinc-800 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-xs text-zinc-500 mb-5">Seleziona il tuo profilo e inserisci la password.</p>
+
+            <div id="profile-picker-grid" class="grid grid-cols-3 gap-4"></div>
+
+            <div class="mt-6 pt-4 border-t border-zinc-800 text-center space-y-3">
+                <button onclick="openLoginModal()" class="w-full py-2.5 rounded-xl text-xs font-bold border border-zinc-700 text-zinc-300 hover:border-indigo-500 hover:text-indigo-400 transition-all">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5 inline"></i> Nuovo accesso (email + password)
+                </button>
+                <button onclick="openAdminLogin()" class="text-[11px] text-zinc-600 hover:text-zinc-400 font-bold transition-all">
+                    <i data-lucide="shield" class="w-3 h-3 inline"></i> Area Amministratore
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal (Primo accesso) -->
+    <div id="auth-login-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i data-lucide="log-in" class="w-5 h-5 text-indigo-500"></i> <span id="auth-login-title">Primo Accesso</span>
+                </h3>
+                <button onclick="closeLoginModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Inserisci l'email e la password forniti dall'amministratore per completare il check-in.
+            </p>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Email</label>
+                <input type="email" id="auth-email-input" placeholder="nome@email.com" autocomplete="email" class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Password</label>
+                <input type="password" id="auth-pass-input" placeholder="••••••••" autocomplete="current-password" class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <button onclick="attemptLogin()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+                <i data-lucide="fingerprint" class="w-4 h-4"></i> Verifica & Continua
+            </button>
+
+            <div class="text-center pt-1">
+                <button onclick="openAdminLogin()" class="text-[11px] text-zinc-500 hover:text-indigo-500 font-bold transition-all">
+                    Sei l'amministratore? Crea utenti qui
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Prompt Modal (Accessi successivi) -->
+    <div id="profile-pass-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="glass-panel w-full max-w-xs rounded-3xl p-6 space-y-4 shadow-2xl text-center">
+            <div class="flex justify-end">
+                <button onclick="closePassModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="pass-profile-avatar" class="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-3xl mx-auto shadow-lg ring-2 ring-indigo-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900"></div>
+            <h3 id="pass-profile-name" class="font-extrabold text-lg">Profilo</h3>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase block text-left mb-1.5">Password</label>
+                <input type="password" id="pass-input" placeholder="••••••••" autocomplete="current-password" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <button onclick="confirmPassEntry()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i> Conferma Ingresso
+            </button>
+        </div>
+    </div>
+
+    <!-- Profile Setup Modal (dopo il primo accesso riuscito) -->
+    <div id="profile-setup-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i data-lucide="user-cog" class="w-5 h-5 text-indigo-500"></i> Configura il tuo Profilo
+                </h3>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Nome</label>
+                <input type="text" id="profile-name-input" maxlength="16" class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Avatar</label>
+                <div id="profile-avatar-picker" class="grid grid-cols-6 gap-2 mt-1.5"></div>
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Colore</label>
+                <div id="profile-color-picker" class="flex flex-wrap gap-2 mt-1.5"></div>
+            </div>
+
+            <label class="flex items-center gap-3 p-3 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 cursor-pointer">
+                <input type="checkbox" id="profile-biometric-check" class="w-4.5 h-4.5 accent-indigo-600">
+                <div class="flex-1">
+                    <span class="text-sm font-bold block">Associa biometria del dispositivo</span>
+                    <span id="profile-biometric-hint" class="text-[11px] text-zinc-500"></span>
+                </div>
+                <i data-lucide="fingerprint" class="w-5 h-5 text-indigo-500 flex-shrink-0"></i>
+            </label>
+
+            <button onclick="saveProfileSetup()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i> Salva & Completa Check-in
+            </button>
+        </div>
+    </div>
+
+    <!-- Admin Panel Modal -->
+    <div id="admin-modal" class="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-indigo-500"></i> Pannello Amministratore
+                </h3>
+                <button onclick="closeAdminModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="flex p-1.5 bg-zinc-200/80 dark:bg-zinc-900/90 rounded-2xl border border-zinc-300 dark:border-zinc-800">
+                <button id="admin-view-btn-users" onclick="switchAdminView('users')" class="flex-1 py-2 text-xs font-extrabold rounded-xl transition-all bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                    <i data-lucide="users" class="w-3.5 h-3.5 inline"></i> Utenti
+                </button>
+                <button id="admin-view-btn-realtime" onclick="switchAdminView('realtime')" class="flex-1 py-2 text-xs font-extrabold rounded-xl transition-all text-zinc-500 dark:text-zinc-400">
+                    <i data-lucide="radio" class="w-3.5 h-3.5 inline"></i> In Tempo Reale
+                </button>
+            </div>
+
+            <div id="admin-view-users">
+            <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Crea nuovo utente</p>
+                <div>
+                    <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Nome</label>
+                    <input type="text" id="admin-new-name" placeholder="Es: Marco Rossi" maxlength="24" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Email</label>
+                    <input type="email" id="admin-new-email" placeholder="nome@email.com" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase">Password</label>
+                    <input type="text" id="admin-new-pass" placeholder="Password provvisoria" class="w-full mt-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                </div>
+                <button onclick="adminCreateUser()" class="w-full py-2.5 rounded-xl glass-button text-white font-bold text-xs flex items-center justify-center gap-2">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Aggiungi Utente
+                </button>
+            </div>
+
+            <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-3">
+                <div class="flex items-center justify-between">
+                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                        <i data-lucide="building" class="w-3 h-3"></i> Attrezzatura Gym House
+                    </p>
+                    <span class="text-[10px] text-zinc-500">seleziona cosa offre la palestra</span>
+                </div>
+                <div id="admin-gym-equipment" class="grid grid-cols-2 gap-2"></div>
+
+                <div class="pt-2 border-t border-zinc-200 dark:border-zinc-800">
+                    <label class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                        <i data-lucide="youtube" class="w-3 h-3"></i> Canale YouTube prioritario (fallback: tutti i canali)
+                    </label>
+                    <div class="flex gap-2 mt-1">
+                        <input type="text" id="admin-youtube-handle" placeholder="@fit-distance" class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                        <button onclick="adminSaveYoutubeHandle()" class="px-3 py-2 rounded-xl bg-zinc-200 dark:bg-zinc-800 text-xs font-bold hover:bg-zinc-300 transition-all">Salva</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-2">Utenti registrati (<span id="admin-user-count">0</span>)</p>
+                <div id="admin-user-list" class="space-y-2 max-h-56 overflow-y-auto pr-1"></div>
+            </div>
+            </div>
+
+            <div id="admin-view-realtime" class="space-y-3 hidden">
+                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                            <i data-lucide="radio" class="w-3 h-3"></i> Connessi in questo momento
+                        </p>
+                        <span id="rt-server-chip" class="text-[10px] font-bold px-2 py-1 rounded-full"></span>
+                    </div>
+                    <p id="rt-online-count" class="text-3xl font-black text-indigo-600 dark:text-indigo-400">0</p>
+                    <p class="text-[11px] text-zinc-500">persone con l'app aperta adesso</p>
+                    <div id="rt-online-list" class="space-y-1.5 max-h-36 overflow-y-auto pr-1"></div>
+                </div>
+
+                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-2">
+                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                        <i data-lucide="calendar-clock" class="w-3 h-3"></i> Programmazione a tutti (real-time)
+                    </p>
+                    <input type="text" id="rt-program-title" placeholder="Titolo (es. Oggi - Corsi e orari)" maxlength="80" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                    <textarea id="rt-program-body" placeholder="Programma o orari...&#10;(es. 18:00 Body Attack · 20:00 Zumba · 21:15 Spinning)" rows="4" maxlength="2000" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"></textarea>
+                    <button onclick="adminSendProgram()" class="w-full py-2.5 rounded-xl glass-button text-white font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Pubblica per tutti
+                    </button>
+                </div>
+
+                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-2">
+                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                        <i data-lucide="bell-ring" class="w-3 h-3"></i> Notifica a tutti (real-time)
+                    </p>
+                    <input type="text" id="rt-notify-title" placeholder="Titolo (es. Corso Zumba 20:00)" maxlength="80" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                    <textarea id="rt-notify-body" placeholder="Messaggio..." rows="2" maxlength="500" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white"></textarea>
+                    <label class="flex items-center gap-2 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                        <input type="checkbox" id="rt-notify-sys" checked class="accent-indigo-500 w-3.5 h-3.5"> Mostra anche come notifica di sistema / PWA
+                    </label>
+                    <button onclick="adminSendNotify()" class="w-full py-2.5 rounded-xl glass-button text-white font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> Invia a tutti in tempo reale
+                    </button>
+                </div>
+
+                <div class="rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-4 space-y-2">
+                    <p class="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase flex items-center gap-1">
+                        <i data-lucide="monitor-play" class="w-3 h-3"></i> Video broadcast a tutti
+                    </p>
+                    <p class="text-[10px] text-zinc-500 leading-relaxed">URL video (.mp4, .m3u8 o YouTube) oppure un file dal tuo computer. I progressi e i timer di chi guarda restano intatti.</p>
+                    <input type="text" id="rt-video-title" placeholder="Titolo video" maxlength="120" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                    <input type="text" id="rt-video-url" placeholder="https://esempio.it/video.mp4 oppure https://youtube.com/watch?v=..." class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+                    <button onclick="adminBroadcastVideo()" class="w-full py-2.5 rounded-xl glass-button text-white font-bold text-xs flex items-center justify-center gap-2">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i> Trasmetti URL a tutti ora
+                    </button>
+                    <div class="border-t border-zinc-200 dark:border-zinc-700 pt-3 space-y-2">
+                        <label class="block text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">Oppure da file locale</label>
+                        <input type="file" id="rt-video-file" accept="video/*,.m3u8" class="block w-full text-xs text-zinc-500 dark:text-zinc-400 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-500/10 file:text-indigo-600 dark:file:text-indigo-400 file:font-bold file:px-3 file:py-1.5 file:cursor-pointer">
+                        <button onclick="adminUploadVideoFile()" class="w-full py-2.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 font-bold text-xs flex items-center justify-center gap-2">
+                            <i data-lucide="upload" class="w-3.5 h-3.5"></i> Carica e trasmetti il file
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal API Key Configuration -->
+    <div id="api-key-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md hidden">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-2xl border border-zinc-200 dark:border-zinc-700">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base flex items-center gap-2">
+                    <i data-lucide="key" class="w-5 h-5 text-indigo-500"></i> Chiavi Centrali (Admin)
+                </h3>
+                <button onclick="closeApiKeyModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Chiavi <b>centrali</b>: impostate dall'amministratore e usate automaticamente da tutti gli utenti (AI + video). Gli altri utenti non vedono quest'icona.
+            </p>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Gemini API Key</label>
+                <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">YouTube Data API Key <span class="text-zinc-400 font-medium">(video esercizi)</span></label>
+                <input type="password" id="youtube-key-input" placeholder="AIzaSy..." class="w-full mt-1.5 bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeApiKeyModal()" class="px-4 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800">Annulla</button>
+                <button onclick="saveApiKey()" class="px-4 py-2 rounded-xl glass-button text-xs font-bold text-white shadow">Salva Chiave</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal -->
+    <div id="custom-alert-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md hidden">
+        <div class="glass-panel w-full max-w-xs rounded-3xl p-5 text-center space-y-3 shadow-2xl">
+            <div id="custom-alert-icon" class="w-10 h-10 rounded-full flex items-center justify-center mx-auto bg-indigo-500/10 text-indigo-500">
+                <i data-lucide="info" class="w-5 h-5"></i>
+            </div>
+            <h4 id="custom-alert-title" class="font-bold text-sm">Messaggio</h4>
+            <p id="custom-alert-body" class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed"></p>
+            <button onclick="closeCustomAlert()" class="w-full py-2 rounded-xl glass-button text-xs font-bold text-white">OK</button>
+        </div>
+    </div>
+
+    <!-- Live Notification Toast (real-time broadcast) -->
+    <div id="live-notify" class="fixed top-4 left-1/2 -translate-x-1/2 z-[80] w-[92%] max-w-sm hidden">
+        <div class="glass-panel rounded-2xl p-4 shadow-2xl border border-indigo-500/30 flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-500 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="bell-ring" class="w-4.5 h-4.5"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p id="live-notify-title" class="font-bold text-sm truncate"></p>
+                <p id="live-notify-body" class="text-xs text-zinc-500 dark:text-zinc-400 leading-snug mt-0.5"></p>
+            </div>
+            <button onclick="closeLiveNotify()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Program Overlay (programmazione real-time) -->
+    <div id="program-overlay" class="fixed top-20 left-1/2 -translate-x-1/2 z-[82] w-[94%] max-w-md hidden">
+        <div class="glass-panel rounded-2xl p-4 shadow-2xl border border-purple-500/40 space-y-3">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-500 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+                    </div>
+                    <p id="program-overlay-title" class="font-bold text-sm truncate">Programmazione</p>
+                </div>
+                <button onclick="closeProgramOverlay()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white flex-shrink-0">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div class="bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-700 p-3 max-h-80 overflow-y-auto">
+                <p id="program-overlay-body" class="text-sm whitespace-pre-wrap leading-relaxed text-zinc-800 dark:text-zinc-200"></p>
+            </div>
+            <button onclick="closeProgramOverlay()" class="w-full py-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20 text-xs font-bold transition-all">Ho visto, chiudi</button>
+        </div>
+    </div>
+
+    <!-- Broadcast Video Overlay (non blocca progressi/timer) -->
+    <div id="broadcast-video-overlay" class="fixed inset-0 z-[85] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md hidden">
+        <div class="w-full max-w-2xl bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                <p id="broadcast-video-title" class="font-bold text-sm truncate pr-3">Video</p>
+                <button onclick="closeBroadcastVideo()" class="text-zinc-400 hover:text-white p-1.5 rounded-full hover:bg-zinc-800 transition-all">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div id="broadcast-video-frame" class="aspect-video bg-black"></div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        let currentApiKey = localStorage.getItem('gymhouse_gemini_key') || '';
+        window.lucide = window.lucide || { createIcons() {} };
+        let currentYoutubeKey = localStorage.getItem('gymhouse_youtube_key') || '';
+        let serverKeyConfig = { gemini: false, youtube: false, setAt: null };
+        let currentTab = 'diet';
+        let html5QrScanner = null;
+
+        // ---- Persistenza dati utente (BMI, dieta, equipaggiamento) in localStorage ----
+        const USER_STATE_KEY = 'gymhouse_user_state';
+
+        function loadUserState() {
+            const defaults = {
+                weight: '75',
+                height: '175',
+                age: '28',
+                gender: 'Uomo',
+                dietGoal: 'Ipertrofia / Masa Muscolare (Surplus calorico)',
+                mealsCount: '4 Pasti (Colazione, Pranzo, Spuntino, Cena)',
+                excluded: ''
+            };
+            let saved = {};
+            try {
+                saved = JSON.parse(localStorage.getItem(USER_STATE_KEY) || '{}');
+            } catch (e) { saved = {}; }
+            const state = { ...defaults, ...saved };
+
+            if (document.getElementById('user-weight')) document.getElementById('user-weight').value = state.weight;
+            if (document.getElementById('user-height')) document.getElementById('user-height').value = state.height;
+            if (document.getElementById('user-age')) document.getElementById('user-age').value = state.age;
+            if (document.getElementById('user-gender')) document.getElementById('user-gender').value = state.gender;
+            if (document.getElementById('diet-goal')) document.getElementById('diet-goal').value = state.dietGoal;
+            if (document.getElementById('diet-meals-count')) document.getElementById('diet-meals-count').value = state.mealsCount;
+            if (document.getElementById('diet-excluded')) document.getElementById('diet-excluded').value = state.excluded;
+
+            return state;
+        }
+
+        function saveUserState() {
+            const state = {
+                weight: document.getElementById('user-weight').value,
+                height: document.getElementById('user-height').value,
+                age: document.getElementById('user-age').value,
+                gender: document.getElementById('user-gender').value,
+                dietGoal: document.getElementById('diet-goal').value,
+                mealsCount: document.getElementById('diet-meals-count').value,
+                excluded: document.getElementById('diet-excluded').value
+            };
+            try {
+                localStorage.setItem(USER_STATE_KEY, JSON.stringify(state));
+            } catch (e) {}
+        }
+
+        function bindPersistence() {
+            const ids = ['user-weight', 'user-height', 'user-age', 'user-gender', 'diet-goal', 'diet-meals-count', 'diet-excluded'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('change', () => { saveUserState(); });
+                el.addEventListener('input', () => { saveUserState(); });
+            });
+        }
+
+        // FIXED PRINTABLE QR URL
+        const FIXED_PRINTABLE_QR_URL = window.location.origin + '/checkin';
+
+        // Simulated Gym House Coordinates (Rome, Italy default)
+        const GYM_HOUSE_COORDS = { lat: 41.9028, lng: 12.4964, maxDistanceMeters: 100 };
+
+        const equipmentList = [
+            { id: 'bodyweight', name: 'Corpo Libero', icon: 'user' },
+            { id: 'dumbbells', name: 'Manubri', icon: 'dumbbell' },
+            { id: 'barbell', name: 'Bilanciere', icon: 'minus' },
+            { id: 'bands', name: 'Elastici', icon: 'activity' },
+            { id: 'bench', name: 'Panca', icon: 'square' },
+            { id: 'treadmill', name: 'Cardio', icon: 'gauge' },
+            { id: 'pullup', name: 'Sbarra Trazioni', icon: 'align-justify' },
+            { id: 'kettlebell', name: 'Kettlebell', icon: 'disc' },
+            { id: 'trx', name: 'TRX (porte)', icon: 'rows' }
+        ];
+
+        // Initialize App on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadUserState();
+            lucide.createIcons();
+            updateApiKeyStatus();
+            calculateBMI();
+            renderEquipmentChips();
+            loadAuth();
+            syncProfiles();
+            renderProfileList();
+            loadCheckinHistory();
+            renderFixedPrintableQR();
+            setupPWA();
+            bindPersistence();
+            openEntryGate();
+            initRealtime();
+        });
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function showAlert(title, body, isError = false) {
+            const modal = document.getElementById('custom-alert-modal');
+            const iconBox = document.getElementById('custom-alert-icon');
+            document.getElementById('custom-alert-title').textContent = title;
+            document.getElementById('custom-alert-body').textContent = body;
+
+            if (isError) {
+                iconBox.className = "w-10 h-10 rounded-full flex items-center justify-center mx-auto bg-rose-500/10 text-rose-500";
+            } else {
+                iconBox.className = "w-10 h-10 rounded-full flex items-center justify-center mx-auto bg-indigo-500/10 text-indigo-500";
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+        // Tab Switching Logic (Desktop Header Nav vs Mobile Bottom Bar)
+        function switchTab(tabId) {
+            currentTab = tabId;
+
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white transition-all";
+            });
+
+            document.querySelectorAll('.desk-nav-btn').forEach(btn => {
+                btn.className = "desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-zinc-600 dark:text-zinc-400 hover:text-indigo-600 dark:hover:text-indigo-400 flex items-center gap-2";
+            });
+
+            const activeMobileNav = document.getElementById(`nav-${tabId}`);
+            if (activeMobileNav) {
+                activeMobileNav.className = "nav-btn flex-1 py-2.5 rounded-2xl flex flex-col items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 bg-white/60 dark:bg-white/10 shadow-sm transition-all";
+            }
+
+            const activeDeskNav = document.getElementById(`desk-nav-${tabId}`);
+            if (activeDeskNav) {
+                activeDeskNav.className = "desk-nav-btn px-4 py-2 rounded-lg text-xs font-bold transition-all text-indigo-600 dark:text-indigo-400 bg-white dark:bg-zinc-900 shadow-sm flex items-center gap-2";
+            }
+
+            if (tabId === 'checkin') {
+                switchCheckinMode('scanner');
+            } else if (tabId === 'diet') {
+                loadSgarroHistory();
+                updateSgarroCount();
+            } else if (tabId === 'plans') {
+                loadPlansTab();
+            } else if (tabId === 'profile') {
+                loadProfileTab();
+            } else if (html5QrScanner) {
+                stopCameraScanner();
+            }
+        }
+
+        function openApiKeyModal() {
+            if (!currentUser || currentUser.email !== ADMIN_EMAIL) {
+                showAlert("Solo amministratore", "Le chiavi AI vengono impostate dall'amministratore. Gli altri utenti le usano automaticamente.");
+                return;
+            }
+            document.getElementById('api-key-input').value = currentApiKey;
+            document.getElementById('youtube-key-input').value = currentYoutubeKey;
+            document.getElementById('api-key-modal').classList.remove('hidden');
+        }
+
+        function closeApiKeyModal() {
+            document.getElementById('api-key-modal').classList.add('hidden');
+        }
+
+        function saveApiKey() {
+            const val = document.getElementById('api-key-input').value.trim();
+            const yt = document.getElementById('youtube-key-input').value.trim();
+            currentApiKey = val;
+            currentYoutubeKey = yt;
+            localStorage.setItem('gymhouse_gemini_key', val);
+            localStorage.setItem('gymhouse_youtube_key', yt);
+            if (serverOnline && currentUser && currentUser.email === ADMIN_EMAIL) {
+                apiFetch('/api/keys', { method: 'POST', body: { email: currentUser.email, gemini: val, youtube: yt } }).then((d) => {
+                    if (d && d.ok) {
+                        loadServerKeys();
+                    } else {
+                        serverKeyConfig.gemini = !!val;
+                        serverKeyConfig.youtube = !!yt;
+                        showAlert("Attenzione", "Salvate in locale ma NON sul server: per servirle a tutti gli utenti riavvia il server Node.", true);
+                        renderKeyAccess();
+                    }
+                });
+            }
+            renderKeyAccess();
+            closeApiKeyModal();
+        }
+
+        function updateApiKeyStatus() {
+            const dot = document.getElementById('api-key-status-dot');
+            if (!dot) return;
+            const ready = serverKeyConfig.gemini || !!currentApiKey;
+            if (ready) {
+                dot.className = "absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 border-2 border-slate-100 dark:border-zinc-950";
+            } else {
+                dot.className = "absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-slate-100 dark:border-zinc-950 animate-pulse";
+            }
+        }
+
+        function renderKeyAccess() {
+            const isAdmin = currentUser && currentUser.email === ADMIN_EMAIL;
+            const btn = document.getElementById('api-key-btn');
+            if (btn) btn.classList.toggle('hidden', !isAdmin);
+            updateApiKeyStatus();
+        }
+
+        function loadServerKeys() {
+            if (!serverOnline) return;
+            apiFetch('/api/keys').then((d) => {
+                if (d && d.ok) {
+                    serverKeyConfig = { gemini: !!d.hasGemini, youtube: !!d.hasYoutube, setAt: d.setAt || null };
+                }
+                renderKeyAccess();
+            }).catch(() => renderKeyAccess());
+        }
+
+        // Calculation of BMI, BMR, and TDEE
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById('user-weight').value) || 0;
+            const heightCm = parseFloat(document.getElementById('user-height').value) || 0;
+            const age = parseInt(document.getElementById('user-age').value) || 25;
+            const gender = document.getElementById('user-gender').value;
+            
+            if (weight <= 0 || heightCm <= 0) return;
+
+            const heightM = heightCm / 100;
+            const bmi = (weight / (heightM * heightM)).toFixed(1);
+
+            let bmr = (10 * weight) + (6.25 * heightCm) - (5 * age);
+            bmr = (gender === "Uomo") ? bmr + 5 : bmr - 161;
+            const tdee = Math.round(bmr * 1.375);
+
+            let category = "Normopeso";
+            let badgeClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+            let posPercent = 37.5;
+
+            if (bmi < 18.5) {
+                category = "Sottopeso";
+                badgeClass = "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20";
+                posPercent = 12.5;
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                category = "Normopeso";
+                badgeClass = "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20";
+                posPercent = 37.5;
+            } else if (bmi >= 25 && bmi <= 29.9) {
+                category = "Sovrappeso";
+                badgeClass = "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20";
+                posPercent = 62.5;
+            } else {
+                category = "Obesità";
+                badgeClass = "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20";
+                posPercent = 87.5;
+            }
+
+            const badge = document.getElementById('bmi-badge');
+            badge.textContent = category;
+            badge.className = `px-3 py-1 rounded-full text-xs font-extrabold ${badgeClass}`;
+
+            document.getElementById('bmi-indicator').style.left = `calc(${posPercent}% - 5px)`;
+            document.getElementById('bmi-value-text').innerHTML = `BMI: <span class="font-extrabold text-indigo-500">${bmi}</span> (${category})`;
+            document.getElementById('bmr-tdee-text').innerHTML = `TDEE stimato: <b>~${tdee} kcal/giorno</b>`;
+
+            updateWorkoutAdvice(bmi, category);
+        }
+
+        function updateWorkoutAdvice(bmi, category) {
+            const adviceEl = document.getElementById('workout-ai-advice');
+            let advice = "";
+
+            if (bmi < 18.5) {
+                advice = `BMI di <b>${bmi}</b> (${category}). Il target consigliato è <b>Aumento Massa Muscolare / Ipertrofia</b> con sovraccarichi progressivi e surplus nutrizionale.`;
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                advice = `BMI di <b>${bmi}</b> (${category}). Stato ottimale! Consigliata la <b>Ricomposizione Corporea</b> bilanciando forza e tonificazione.`;
+            } else if (bmi >= 25 && bmi <= 29.9) {
+                advice = `BMI di <b>${bmi}</b> (${category}). Indicata una combinazione di <b>Definizione Muscolare e Consumo Calorico</b> con tempi di recupero controllati.`;
+            } else {
+                advice = `BMI di <b>${bmi}</b> (${category}). Consigliato focus su <b>Dimagrimento Progressivo e Tonificazione</b> a basso impatto articolare.`;
+            }
+
+            adviceEl.innerHTML = advice;
+        }
+
+        // ================= GYM CONFIG (Solo Admin) =================
+        const GYM_CONFIG_KEY = 'gymhouse_gym_config';
+
+        function loadGymConfig() {
+            const defaults = { equipment: ['bodyweight', 'dumbbells', 'bands', 'bench', 'trx'], youtubeHandle: '@fit-distance' };
+            try {
+                const saved = JSON.parse(localStorage.getItem(GYM_CONFIG_KEY) || '{}');
+                return {
+                    ...defaults,
+                    ...saved,
+                    equipment: Array.isArray(saved.equipment) ? saved.equipment : defaults.equipment
+                };
+            } catch (e) {
+                return defaults;
+            }
+        }
+
+        function saveGymConfig(cfg) {
+            try { localStorage.setItem(GYM_CONFIG_KEY, JSON.stringify(cfg)); } catch (e) {}
+        }
+
+        function gymEquipmentNames() {
+            const cfg = loadGymConfig();
+            return cfg.equipment.map(id => equipmentList.find(e => e.id === id)?.name).join(', ') || 'Corpo libero';
+        }
+
+        // Read-only chips (view por socio)
+        function renderEquipmentChips() {
+            const container = document.getElementById('equipment-chips');
+            if (!container) return;
+            const cfg = loadGymConfig();
+            container.innerHTML = equipmentList.map(item => {
+                const isSelected = cfg.equipment.includes(item.id);
+                return `
+                    <div class="p-2.5 rounded-2xl text-xs font-bold border flex items-center gap-2 text-left ${
+                        isSelected
+                        ? 'bg-indigo-500/15 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                        : 'bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-500'
+                    }">
+                        <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        <span>${item.name} ${isSelected ? '<i data-lucide="check" class="w-3 h-3 inline"></i>' : ''}</span>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Chips interattive nel pannello Admin
+        function renderAdminGymConfig() {
+            const container = document.getElementById('admin-gym-equipment');
+            if (!container) return;
+            const cfg = loadGymConfig();
+            document.getElementById('admin-youtube-handle').value = cfg.youtubeHandle || '@fit-distance';
+            container.innerHTML = equipmentList.map(item => {
+                const isSelected = cfg.equipment.includes(item.id);
+                return `
+                    <button type="button" onclick="toggleGymEquipment('${item.id}')"
+                        class="p-2.5 rounded-2xl text-xs font-bold border flex items-center gap-2 transition-all text-left ${
+                            isSelected
+                            ? 'bg-indigo-500/15 border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                            : 'bg-white/50 dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 text-zinc-500'
+                        }">
+                        <i data-lucide="${item.icon}" class="w-4 h-4"></i>
+                        <span>${item.name}</span>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function toggleGymEquipment(id) {
+            const cfg = loadGymConfig();
+            if (cfg.equipment.includes(id)) {
+                cfg.equipment = cfg.equipment.filter(x => x !== id);
+            } else {
+                cfg.equipment.push(id);
+            }
+            saveGymConfig(cfg);
+            renderAdminGymConfig();
+            renderEquipmentChips();
+        }
+
+        function adminSaveYoutubeHandle() {
+            const cfg = loadGymConfig();
+            cfg.youtubeHandle = document.getElementById('admin-youtube-handle').value.trim();
+            saveGymConfig(cfg);
+            showAlert("Configurazione salvata", `Video esercizi prioritariamente dal canale: ${cfg.youtubeHandle} (con fallback su tutto YouTube)`);
+        }
+
+        // Gemini AI API Call (chiave centrale gestita dall'admin sul server)
+        async function callGeminiAPI(prompt) {
+            if (serverOnline) {
+                const d = await apiFetch('/api/gemini', { method: 'POST', body: { prompt } });
+                if (d && d.ok && d.text) return d.text;
+                if (d && !d.ok) {
+                    throw new Error(d.message || "Errore nella comunicazione con l'API Gemini.");
+                }
+            }
+
+            if (currentApiKey) {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${currentApiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: {
+                        parts: [{ text: "Sei il Personal Trainer e Nutrizionista della Gym House. Rispondi in italiano con tono professionale, strutturato in HTML pulito e senza markdown grezzo." }]
+                    }
+                };
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || "Errore nella comunicazione con l'API Gemini.");
+                }
+                const data = await response.json();
+                return data.candidates?.[0]?.content?.parts?.[0]?.text || "Nessun contenuto generato dall'AI.";
+            }
+
+            throw new Error("Chiave AI non configurata. L'amministratore deve impostarla nel pannello chiavi (o avviare il server Node).");
+        }
+
+        async function generateDietAI() {
+            const weight = document.getElementById('user-weight').value;
+            const height = document.getElementById('user-height').value;
+            const age = document.getElementById('user-age').value;
+            const gender = document.getElementById('user-gender').value;
+            const goal = document.getElementById('diet-goal').value;
+            const meals = document.getElementById('diet-meals-count').value;
+            const excluded = document.getElementById('diet-excluded').value || 'Nessuno';
+
+            const dietResultContainer = document.getElementById('diet-result-container');
+            const dietContent = document.getElementById('diet-content');
+
+            dietResultContainer.classList.remove('hidden');
+            dietContent.innerHTML = `<div class="p-6 text-center text-zinc-500 animate-pulse flex flex-col items-center gap-2">
+                <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-indigo-500"></i>
+                <span>Elaborazione piano alimentare con Gemini AI...</span>
+            </div>`;
+            lucide.createIcons();
+
+            const prompt = `Crea un piano nutrizionale SETTIMANALE, dal Lunedì alla Domenica (7 giorni), per: Sesso ${gender}, Età ${age}, Peso ${weight}kg, Altezza ${height}cm.
+            Obiettivo: ${goal}. Frequenza pasti scelta: ${meals}. Cibi esclusi o intolleranze: ${excluded}.
+            Rispondi SOLO con JSON puro, senza testo intorno, senza markdown e senza segnaposto, in questo formato:
+            {"summary":"breve introduzione in italiano","calories":"2400","days":[{"name":"Lunedì","meals":[{"name":"Colazione","items":["cibo con quantità reali, es. 80g fiocchi d'avena"]},{"name":"Pranzo","items":["cibo","quantità"]},{"name":"Spuntino","items":["..."]},{"name":"Cena","items":["..."]}]},{"name":"Martedì","meals":[{"name":"Colazione","items":["..."]},{"name":"Pranzo","items":["..."]},{"name":"Spuntino","items":["..."]},{"name":"Cena","items":["..."]}]},...fino a Domenica...]}
+            Ogni giorno deve avere ESATTAMENTE i pasti scelti da: ${meals}. Rispetta rigorosamente gli alimenti esclusi: ${excluded}. Quantità realistiche in grammi o porzioni. Nomi cibi in italiano.`;
+
+            try {
+                const resultText = await callGeminiAPI(prompt);
+                const data = parseDietJSON(resultText);
+                dietContent.innerHTML = buildDietHTML(data);
+                saveGeneratedPlan('diet', dietContent.innerHTML);
+            } catch (err) {
+                dietContent.innerHTML = `<div class="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-2xl text-xs font-semibold">
+                    ⚠️ ${esc(err.message)}
+                </div>`;
+            }
+        }
+
+        async function generateWorkoutAI() {
+            const weight = document.getElementById('user-weight').value;
+            const height = document.getElementById('user-height').value;
+            const days = document.getElementById('workout-days').value;
+            const duration = document.getElementById('workout-duration').value;
+            const level = document.getElementById('workout-level').value;
+            const equipNames = gymEquipmentNames();
+
+            const workoutResultContainer = document.getElementById('workout-result-container');
+            const workoutContent = document.getElementById('workout-content');
+
+            workoutResultContainer.classList.remove('hidden');
+            workoutContent.innerHTML = `<div class="p-6 text-center text-zinc-500 animate-pulse flex flex-col items-center gap-2">
+                <i data-lucide="loader-2" class="w-6 h-6 animate-spin text-indigo-500"></i>
+                <span>Creazione scheda con Gemini AI e ricerca dei video dimostrativi su YouTube...</span>
+            </div>`;
+            lucide.createIcons();
+
+            const prompt = `Genera una scheda di allenamento per: Peso ${weight}kg, Altezza ${height}cm, Livello ${level}.
+            Frequenza: ${days}, Durata: ${duration}. Equipaggiamento disponibile in palestra: ${equipNames}.
+            Rispondi SOLO con JSON puro, senza testo intorno, senza markdown e senza segnaposto, in questo formato:
+            {"summary":"breve introduzione","days":[{"name":"Giorno 1 - (split)","exercises":[{"name":"Nome esercizio","equipment":"attrezzo","sets":"3","reps":"10-12","rest":"60s"}]}]}
+            Ogni esercizio deve essere eseguibile con l'equipaggiamento elencato sopra. Nomi esercizi in italiano, sintetici e riconoscibili.`;
+
+            try {
+                const resultText = await callGeminiAPI(prompt);
+                const data = parseJSONResponse(resultText);
+                const html = await buildWorkoutHTML(data);
+                workoutContent.innerHTML = html;
+                saveGeneratedPlan('workout', html);
+            } catch (err) {
+                workoutContent.innerHTML = `<div class="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 rounded-2xl text-xs font-semibold">
+                    ⚠️ ${esc(err.message)}
+                </div>`;
+            }
+        }
+
+        // ================= SGARRO (CHEAT MEAL) TRACKER =================
+        function sgarroKeyForUser() {
+            const base = currentUser && currentUser.email ? currentUser.email : 'guest';
+            return 'gymhouse_sgarro_' + base.toLowerCase().replace(/[^a-z0-9@._-]/g, '');
+        }
+
+        async function recordSgarro() {
+            const food = document.getElementById('sgarro-food').value.trim();
+            const quantity = document.getElementById('sgarro-quantity').value.trim();
+            const time = document.getElementById('sgarro-time').value;
+
+            if (!food) {
+                alert('Inserisci cosa hai mangiato');
+                return;
+            }
+
+            const now = new Date();
+            const sgarroTime = time || now.toTimeString().slice(0, 5);
+            const sgarroData = {
+                food,
+                quantity: quantity || 'Non specificato',
+                time: sgarroTime,
+                date: now.toLocaleDateString('it-IT'),
+                timestamp: now.getTime()
+            };
+
+            // Show loading state
+            const aiResult = document.getElementById('sgarro-ai-result');
+            const aiText = document.getElementById('sgarro-ai-text');
+            aiResult.classList.remove('hidden');
+            aiText.innerHTML = `<div class="flex items-center gap-2"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Analisi in corso...</div>`;
+            lucide.createIcons();
+
+            // Get AI analysis
+            try {
+                const analysis = await analyzeSgarroWithAI(food, quantity);
+                aiText.textContent = analysis;
+            } catch (err) {
+                aiText.textContent = 'Analisi non disponibile: ' + err.message;
+            }
+
+            // Save sgarro
+            saveSgarro(sgarroData);
+
+            // Clear inputs
+            document.getElementById('sgarro-food').value = '';
+            document.getElementById('sgarro-quantity').value = '';
+            document.getElementById('sgarro-time').value = '';
+
+            // Update UI
+            loadSgarroHistory();
+            updateSgarroCount();
+        }
+
+        async function analyzeSgarroWithAI(food, quantity) {
+            const weight = document.getElementById('user-weight').value;
+            const goal = document.getElementById('diet-goal').value;
+            
+            // Get saved diet if available
+            let dietContext = '';
+            try {
+                const dietKey = planKeyForUser('gymhouse_diet');
+                const storedDiet = localStorage.getItem(dietKey);
+                if (storedDiet) {
+                    const dietData = JSON.parse(storedDiet);
+                    dietContext = `\n\nCONTESTO DIETA SALVATA: L'utente ha una dieta salvata. Considera questa dieta come riferimento per valutare quanto questo sgarro si discosta dal piano alimentare previsto.`;
+                }
+            } catch (e) {}
+
+            const prompt = `Analizza questo sgarro (cheat meal) dal punto di vista nutrizionale: "${food}" (${quantity || 'quantità non specificata'}).
+            L'utente pesa ${weight}kg e il suo obiettivo è: ${goal}.${dietContext}
+            Valuta l'impatto calorico approssimativo, i macronutrienti e come questo sgarro potrebbe influenzare i progressi verso l'obiettivo.
+            Rispondi in italiano, in modo breve e diretto (massimo 100 parole), con tono costruttivo ma onesto. Suggerisci come compensare questo sgarro nei prossimi giorni.`;
+
+            const resultText = await callGeminiAPI(prompt);
+            return resultText;
+        }
+
+        async function handleDietImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const statusDiv = document.getElementById('diet-import-status');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerHTML = '<span class="flex items-center gap-1"><i data-lucide="loader-2" class="w-3 h-3 animate-spin"></i> Elaborazione file...</span>';
+            lucide.createIcons();
+
+            try {
+                // For images, convert to base64
+                if (file.type.startsWith('image/')) {
+                    const base64 = await fileToBase64(file);
+                    await processDietWithAI(base64, 'image');
+                } 
+                // For PDF, we'll use text extraction (simplified approach)
+                else if (file.type === 'application/pdf') {
+                    statusDiv.innerHTML = '<span class="text-amber-500">⚠️ Importazione PDF: funzionalità in sviluppo. Usa un\'immagine della dieta per ora.</span>';
+                }
+            } catch (err) {
+                statusDiv.innerHTML = '<span class="text-rose-500">❌ Errore: ' + err.message + '</span>';
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function processDietWithAI(content, type) {
+            const statusDiv = document.getElementById('diet-import-status');
+            
+            const prompt = type === 'image' 
+                ? `Analizza questa immagine di una dieta alimentare. Estrai i pasti, gli alimenti e le quantità. Organizza i dati in formato JSON strutturato con i giorni della settimana e i pasti corrispondenti. Se non riesci a leggere chiaramente, indica quali parti sono illeggibili.`
+                : `Analizza questo testo di dieta alimentare. Estrai i pasti, gli alimenti e le quantità. Organizza i dati in formato JSON strutturato.`;
+
+            try {
+                // Note: For images, we'd need to use Gemini Vision API
+                // For now, we'll show a message that this feature requires the vision API
+                statusDiv.innerHTML = '<span class="text-amber-500">⚠️ Importazione immagini: richiede API Vision. Funzionalità in arrivo.</span>';
+                
+                // Placeholder: save the file reference
+                const importedDiet = {
+                    type: 'imported',
+                    fileType: type,
+                    fileName: document.getElementById('diet-import-file').files[0].name,
+                    content: content.substring(0, 1000) + '...', // Truncated for storage
+                    date: new Date().toLocaleDateString('it-IT')
+                };
+                
+                // Save as reference
+                const key = planKeyForUser('gymhouse_diet_import');
+                localStorage.setItem(key, JSON.stringify(importedDiet));
+                
+                statusDiv.innerHTML = '<span class="text-emerald-500">✅ File salvato come riferimento. Elaborazione AI in arrivo.</span>';
+            } catch (err) {
+                statusDiv.innerHTML = '<span class="text-rose-500">❌ Errore elaborazione: ' + err.message + '</span>';
+            }
+        }
+
+        function saveSgarro(sgarroData) {
+            const key = sgarroKeyForUser();
+            let sgarri = [];
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) sgarri = JSON.parse(stored);
+            } catch (e) {}
+
+            sgarri.unshift(sgarroData);
+            
+            // Keep only last 30 sgarri
+            if (sgarri.length > 30) sgarri = sgarri.slice(0, 30);
+
+            try {
+                localStorage.setItem(key, JSON.stringify(sgarri));
+            } catch (e) {}
+
+            // Sync with server if online
+            if (serverOnline && currentUser) {
+                apiFetch('/api/sgarro/' + encodeURIComponent(currentUser.email), {
+                    method: 'POST',
+                    body: { sgarro: sgarroData }
+                }).catch(() => {});
+            }
+        }
+
+        function loadSgarroHistory() {
+            const key = sgarroKeyForUser();
+            let sgarri = [];
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) sgarri = JSON.parse(stored);
+            } catch (e) {}
+
+            const container = document.getElementById('sgarro-history-container');
+            const list = document.getElementById('sgarro-history-list');
+
+            if (sgarri.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            list.innerHTML = sgarri.map(s => `
+                <div class="rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-700 p-3">
+                    <div class="flex justify-between items-start mb-1">
+                        <p class="text-xs font-bold text-zinc-800 dark:text-zinc-200">${esc(s.food)}</p>
+                        <span class="text-[10px] text-zinc-500 dark:text-zinc-400 font-mono">${s.date} ${s.time}</span>
+                    </div>
+                    <p class="text-[11px] text-zinc-600 dark:text-zinc-400">Quantità: ${esc(s.quantity)}</p>
+                </div>
+            `).join('');
+        }
+
+        function updateSgarroCount() {
+            const key = sgarroKeyForUser();
+            let sgarri = [];
+            try {
+                const stored = localStorage.getItem(key);
+                if (stored) sgarri = JSON.parse(stored);
+            } catch (e) {}
+
+            // Count sgarri in current week (last 7 days)
+            const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            const thisWeek = sgarri.filter(s => s.timestamp && s.timestamp > oneWeekAgo).length;
+
+            const badge = document.getElementById('sgarro-count-badge');
+            if (badge) badge.textContent = `${thisWeek} questa settimana`;
+        }
+
+        // ================= PIANI SALVATI (per utente) =================
+        function planKeyForUser(prefix) {
+            const base = currentUser && currentUser.email ? currentUser.email : 'guest';
+            return prefix + '_' + base.toLowerCase().replace(/[^a-z0-9@._-]/g, '');
+        }
+
+        function saveGeneratedPlan(kind, html) {
+            if (!currentUser) return;
+            const key = planKeyForUser(kind === 'diet' ? 'gymhouse_diet' : 'gymhouse_workout');
+            const rec = { html, date: new Date().toLocaleString('it-IT') };
+            try { localStorage.setItem(key, JSON.stringify(rec)); } catch (e) {}
+            if (serverOnline) {
+                apiFetch('/api/plans/' + encodeURIComponent(currentUser.email), {
+                    method: 'POST',
+                    body: { kind, data: rec }
+                }).catch(() => {});
+            }
+        }
+
+        function loadPlansTab() {
+            const badge = document.getElementById('plans-user-badge');
+            if (badge) badge.textContent = currentUser ? ('Profilo: ' + currentUser.name) : '';
+            loadPlanPanel('diet');
+            loadPlanPanel('workout');
+        }
+
+        function loadPlanPanel(kind) {
+            const contentEl = document.getElementById(kind === 'diet' ? 'plans-diet-content' : 'plans-workout-content');
+            const dateEl = document.getElementById(kind === 'diet' ? 'plans-diet-date' : 'plans-workout-date');
+            const render = (rec) => {
+                if (rec && rec.html) {
+                    contentEl.innerHTML = rec.html;
+                    dateEl.textContent = 'Salvato: ' + (rec.date || '');
+                } else {
+                    contentEl.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-3">Nessun piano ${kind === 'diet' ? 'alimentare' : 'di allenamento'} salvato per questo profilo. Generane uno nuovo.</p>`;
+                    dateEl.textContent = '';
+                }
+            };
+            if (currentUser && serverOnline) {
+                apiFetch('/api/plans/' + encodeURIComponent(currentUser.email)).then((d) => {
+                    if (d && d.ok) {
+                        const rec = kind === 'diet' ? d.diet : d.workout;
+                        if (rec && rec.html) { render(rec); return; }
+                    }
+                    // fallback sul locale
+                    const key = planKeyForUser(kind === 'diet' ? 'gymhouse_diet' : 'gymhouse_workout');
+                    let rec = null;
+                    try { rec = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { rec = null; }
+                    render(rec);
+                }).catch(() => {
+                    const key = planKeyForUser(kind === 'diet' ? 'gymhouse_diet' : 'gymhouse_workout');
+                    let rec = null;
+                    try { rec = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { rec = null; }
+                    render(rec);
+                });
+            } else {
+                const key = planKeyForUser(kind === 'diet' ? 'gymhouse_diet' : 'gymhouse_workout');
+                let rec = null;
+                try { rec = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) { rec = null; }
+                render(rec);
+            }
+        }
+
+        // ================= VIDEO YOUTUBE (canale Fit'distance) =================
+        function esc(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function parseJSONResponse(text) {
+            let t = String(text || '').trim();
+            if (t.startsWith('```')) {
+                t = t.replace(/^```[a-zA-Z]*\r?\n?/, '').replace(/\r?\n?```$/, '');
+            }
+            const start = t.indexOf('{');
+            const end = t.lastIndexOf('}');
+            if (start !== -1 && end > start) t = t.slice(start, end + 1);
+            const data = JSON.parse(t);
+            if (!data || !Array.isArray(data.days)) throw new Error('La scheda generata non è valida. Riprova.');
+            return data;
+        }
+
+        function parseDietJSON(text) {
+            let t = String(text || '').trim();
+            if (t.startsWith('```')) {
+                t = t.replace(/^```[a-zA-Z]*\r?\n?/, '').replace(/\r?\n?```$/, '');
+            }
+            const start = t.indexOf('{');
+            const end = t.lastIndexOf('}');
+            if (start !== -1 && end > start) t = t.slice(start, end + 1);
+            const data = JSON.parse(t);
+            if (!data || !Array.isArray(data.days) || !data.days.length) throw new Error('La dieta generata non è valida. Riprova.');
+            return data;
+        }
+
+        function buildDietHTML(data) {
+            const days = (data.days || []);
+            let html = '';
+            if (data.summary) {
+                html += `<div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-zinc-700 dark:text-zinc-300">${esc(data.summary)}</div>`;
+            }
+            if (data.calories) {
+                html += `<div class="flex items-center gap-2 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                    <i data-lucide="flame" class="w-3.5 h-3.5"></i> ${esc(data.calories)} al giorno
+                </div>`;
+            }
+            days.forEach((day, di) => {
+                const meals = (day.meals || []);
+                html += `<div class="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div class="px-4 py-3 bg-zinc-100/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-700 font-bold text-sm flex items-center gap-2">
+                        <i data-lucide="${di === 0 ? 'calendar-check' : 'calendar'}" class="w-4 h-4 text-indigo-500"></i> ${esc(day.name || ('Giorno ' + (di + 1)))}
+                    </div>
+                    <div class="p-3 space-y-2.5">`;
+                meals.forEach((meal) => {
+                    const items = (meal.items || []);
+                    html += `<div class="rounded-xl bg-white/70 dark:bg-zinc-900/70 border border-zinc-200 dark:border-zinc-700 p-3">
+                        <p class="text-[11px] font-extrabold uppercase tracking-wide text-indigo-600 dark:text-indigo-400 flex items-center gap-1">
+                            <i data-lucide="utensils" class="w-3 h-3"></i> ${esc(meal.name || 'Pasto')}
+                        </p>
+                        <ul class="mt-1.5 space-y-1 text-xs text-zinc-700 dark:text-zinc-300">`;
+                    items.forEach((it) => {
+                        html += `<li class="flex items-start gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0"></span>
+                            <span>${esc(it)}</span>
+                        </li>`;
+                    });
+                    html += `</ul></div>`;
+                });
+                html += `</div></div>`;
+            });
+            return html;
+        }
+
+        let ytChannelIdPromise = null;
+
+        async function resolveYoutubeChannelId() {
+            if (ytChannelIdPromise) return ytChannelIdPromise;
+            ytChannelIdPromise = (async () => {
+                const cfg = loadGymConfig();
+                const handle = (cfg.youtubeHandle || '@fit-distance').trim();
+                const cacheKey = 'yt-channel-' + handle;
+                try {
+                    const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+                    if (cached) return cached;
+                } catch (e) {}
+                if (serverOnline) {
+                    const d = await apiFetch('/api/youtube/channel', { method: 'POST', body: { handle } });
+                    if (d && d.ok && d.channelId) {
+                        try { localStorage.setItem(cacheKey, JSON.stringify(d.channelId)); } catch (e) {}
+                        return d.channelId;
+                    }
+                    if (d && d.ok && !serverKeyConfig.youtube) return null;
+                }
+                if (currentYoutubeKey) {
+                    const url = `https://www.googleapis.com/youtube/v3/channels?part=id&forHandle=${encodeURIComponent(handle)}&key=${currentYoutubeKey}`;
+                    try {
+                        const r = await fetch(url);
+                        if (!r.ok) return null;
+                        const d = await r.json();
+                        const id = d.items && d.items[0] && d.items[0].id;
+                        if (id) {
+                            try { localStorage.setItem(cacheKey, JSON.stringify(id)); } catch (e) {}
+                        }
+                        return id || null;
+                    } catch (e) { return null; }
+                }
+                return null;
+            })();
+            return ytChannelIdPromise;
+        }
+
+        async function getYouTubeVideo(name, equip) {
+            const norm = (name + ' ' + (equip || '')).toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').slice(0, 70);
+            let cache = {};
+            try { cache = JSON.parse(localStorage.getItem('gymhouse_yt_video_cache') || '{}'); } catch (e) {}
+            if (cache[norm]) return cache[norm];
+
+            const query = name + ' ' + (equip || '');
+            const doSearch = async (channelIdParam) => {
+                let v = null;
+                if (serverOnline) {
+                    const d = await apiFetch('/api/youtube/search', { method: 'POST', body: { q: query, channelId: channelIdParam || '' } });
+                    if (d && d.ok && d.id) v = { id: d.id, title: d.title || '' };
+                }
+                if (!v && currentYoutubeKey) {
+                    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&videoEmbeddable=true&safeSearch=strict&q=${encodeURIComponent(query)}&key=${currentYoutubeKey}${channelIdParam ? `&channelId=${encodeURIComponent(channelIdParam)}` : ''}`;
+                    try {
+                        const r = await fetch(url);
+                        if (r.ok) {
+                            const dd = await r.json();
+                            const item = dd.items && dd.items[0];
+                            if (item && item.id && item.id.videoId) v = { id: item.id.videoId, title: item.snippet.title };
+                        }
+                    } catch (e) {}
+                }
+                return v;
+            };
+            const cacheAndReturn = (v) => {
+                cache[norm] = v;
+                try { localStorage.setItem('gymhouse_yt_video_cache', JSON.stringify(cache)); } catch (e) {}
+                return v;
+            };
+
+            const channelId = await resolveYoutubeChannelId();
+            if (channelId) {
+                const v = await doSearch(channelId);
+                if (v) return cacheAndReturn(v);
+            }
+
+            // Fallback: se il canale configurato non ha il video, cerca su tutto YouTube
+            // (anche canali simili) per avere sempre una demo dell'esercizio.
+            let fb = null;
+            if (serverOnline) {
+                const d = await apiFetch('/api/youtube/search', { method: 'POST', body: { q: query } });
+                if (d && d.ok && d.id) fb = { id: d.id, title: d.title || '' };
+            }
+            if (!fb && currentYoutubeKey) {
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&videoEmbeddable=true&safeSearch=strict&q=${encodeURIComponent(query)}&key=${currentYoutubeKey}`;
+                try {
+                    const r = await fetch(url);
+                    if (r.ok) {
+                        const dd = await r.json();
+                        const item = dd.items && dd.items[0];
+                        if (item && item.id && item.id.videoId) fb = { id: item.id.videoId, title: item.snippet.title };
+                    }
+                } catch (e) {}
+            }
+            if (fb) return cacheAndReturn(fb);
+            return null;
+        }
+
+        async function buildWorkoutHTML(data) {
+            const noYt = !currentYoutubeKey;
+            let html = ``;
+            if (data.summary) {
+                html += `<div class="p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-xs font-medium text-zinc-700 dark:text-zinc-300">${esc(data.summary)}</div>`;
+            }
+            for (const day of (data.days || [])) {
+                html += `<div class="rounded-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                    <div class="px-4 py-3 bg-zinc-100/80 dark:bg-zinc-900/80 border-b border-zinc-200 dark:border-zinc-700 font-bold text-sm flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500"></i> ${esc(day.name || 'Allenamento')}
+                    </div>
+                    <div class="divide-y divide-zinc-200 dark:divide-zinc-800">`;
+                for (const ex of (day.exercises || [])) {
+                    const vid = noYt ? null : await getYouTubeVideo(ex.name, ex.equipment);
+                    html += `<div class="p-3.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="font-bold text-sm">${esc(ex.name)}</p>
+                                <p class="text-[11px] text-zinc-500 mt-0.5">
+                                    ${esc(ex.equipment || '')} · ${esc(ex.sets)} serie × ${esc(ex.reps)} reps · Recupero ${esc(ex.rest)}
+                                </p>
+                            </div>
+                        </div>`;
+                    if (vid) {
+                        html += `<video-pull class="mt-2 rounded-xl overflow-hidden aspect-video block bg-zinc-100 dark:bg-zinc-900">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/${vid.id}" title="${esc(vid.title)}" loading="lazy" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                        </video-pull>`;
+                    } else if (!noYt) {
+                        html += `<p class="text-[10px] text-zinc-400 italic mt-1">Nessun video trovato per questo esercizio.</p>`;
+                    }
+                    html += `</div>`;
+                }
+                html += `</div></div>`;
+            }
+            if (noYt) {
+                html += `<p class="text-[11px] text-zinc-500 italic flex items-center gap-1">
+                    <i data-lucide="youtube" class="w-3.5 h-3.5"></i> Aggiungi la <b>YouTube Data API Key</b> dall'icona chiave per vedere i video dimostrativi per tutti gli esercizi (canale Fit'distance e altri canali fitness simili).
+                </p>`;
+            }
+            lucide.createIcons();
+            return html;
+        }
+
+        function renderFixedPrintableQR() {
+            const qrBox = document.getElementById('qrcode-box');
+            if (!qrBox) return;
+            qrBox.innerHTML = '';
+
+            new QRCode(qrBox, {
+                text: FIXED_PRINTABLE_QR_URL,
+                width: 180,
+                height: 180,
+                colorDark: "#09090b",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            document.getElementById('fixed-url-text').textContent = `URL FISSO STAMPATO: ${FIXED_PRINTABLE_QR_URL}`;
+        }
+
+        function switchCheckinMode(mode) {
+            const scanBtn = document.getElementById('mode-scanner-btn');
+            const genBtn = document.getElementById('mode-generator-btn');
+            const scanView = document.getElementById('checkin-scanner-view');
+            const genView = document.getElementById('checkin-generator-view');
+
+            if (mode === 'scanner') {
+                scanBtn.className = "flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm";
+                genBtn.className = "flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all text-zinc-500 hover:text-zinc-900 dark:hover:text-white";
+                scanView.classList.remove('hidden');
+                genView.classList.add('hidden');
+                startCameraScanner();
+            } else {
+                genBtn.className = "flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm";
+                scanBtn.className = "flex-1 py-2.5 text-xs font-extrabold rounded-xl transition-all text-zinc-500 hover:text-zinc-900 dark:hover:text-white";
+                genView.classList.remove('hidden');
+                scanView.classList.add('hidden');
+                stopCameraScanner();
+            }
+        }
+
+        function showQrCodeForSharing() {
+            // Show a modal with the QR code for easy sharing
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg';
+            modal.innerHTML = `
+                <div class="w-full max-w-sm bg-zinc-950 border border-zinc-800 rounded-3xl p-6 shadow-2xl">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-extrabold text-lg tracking-tight">Condividi QR Code</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-zinc-500 hover:text-white p-1.5 rounded-full hover:bg-zinc-800 transition-all">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center gap-4">
+                        <div class="bg-white p-4 rounded-2xl">
+                            <div id="share-qr-code" class="w-40 h-40"></div>
+                        </div>
+                        <p class="text-xs text-zinc-400 text-center">Mostra questo QR code per il check-in rapido</p>
+                        <button onclick="shareQrCode()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                            <i data-lucide="share-2" class="w-4 h-4"></i> Condividi
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            lucide.createIcons();
+
+            // Generate QR code
+            new QRCode(document.getElementById('share-qr-code'), {
+                text: window.location.href,
+                width: 160,
+                height: 160,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        async function shareQrCode() {
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'Gym House Check-in',
+                        text: 'Esegui il check-in alla Gym House',
+                        url: window.location.href
+                    });
+                } catch (err) {
+                    console.log('Share cancelled');
+                }
+            } else {
+                // Fallback: copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('Link copiato negli appunti!');
+            }
+        }
+
+        // ================= AUTH & PROFILI (NETFLIX STYLE) & BIOMETRIA =================
+        const AUTH_KEY = 'gymhouse_auth';
+        const ADMIN_EMAIL = 'emobtemo@gmail.com';
+        const ADMIN_PASSWORD_HASH = '40c2ce2a5f1f0bdcff1ef139c4d64e7b8b9ab77a29f2c08f6368d18f75035d37';
+        const AVATAR_EMOJIS = ['💪', '🏃', '🤸', '🥊', '🏋️', '🧘', '⚽', '🎯', '🏀', '🦾', '⚡', '🔥'];
+        const AVATAR_COLORS = [
+            { bg: 'from-indigo-500 to-purple-500', ring: 'ring-indigo-400' },
+            { bg: 'from-rose-500 to-pink-500', ring: 'ring-rose-400' },
+            { bg: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-400' },
+            { bg: 'from-amber-500 to-orange-500', ring: 'ring-amber-400' },
+            { bg: 'from-sky-500 to-blue-500', ring: 'ring-sky-400' },
+            { bg: 'from-fuchsia-500 to-purple-600', ring: 'ring-fuchsia-400' },
+            { bg: 'from-lime-500 to-emerald-500', ring: 'ring-lime-400' },
+            { bg: 'from-red-500 to-rose-600', ring: 'ring-red-400' }
+        ];
+
+        let authUsers = [];
+        let profiles = [];
+        let manageProfilesMode = false;
+        let pendingAuthUser = null;
+        let pendingPassEmail = null;
+        let loginMode = 'member';
+        let selectedAvatarIndex = 0;
+        let selectedColorIndex = 0;
+        let currentUser = null;
+
+        function loadAuth() {
+            try { authUsers = JSON.parse(localStorage.getItem(AUTH_KEY) || '[]'); }
+            catch (e) { authUsers = []; }
+            if (!Array.isArray(authUsers)) authUsers = [];
+            return authUsers;
+        }
+
+        function saveAuth() {
+            try { localStorage.setItem(AUTH_KEY, JSON.stringify(authUsers)); } catch (e) {}
+        }
+
+        async function hashPassword(pw, email) {
+            const salt = email ? email.toLocaleLowerCase().trim() : '';
+            const raw = salt + ':' + pw;
+            if (window.crypto && crypto.subtle) {
+                try {
+                    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw));
+                    return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('');
+                } catch (e) {}
+            }
+            return fallbackSHA256(raw);
+        }
+
+        function fallbackSHA256(ascii) {
+            function rightRotate(v, a) { return (v >>> a) | (v << (32 - a)); }
+            const maxWord = Math.pow(2, 32);
+            const result = [];
+            const words = [];
+            const asciiBitLength = ascii.length * 8;
+            let hash = [];
+            let k = [];
+            let primeCounter = 0;
+            const isComposite = {};
+            for (let candidate = 2; primeCounter < 64; candidate++) {
+                if (!isComposite[candidate]) {
+                    for (let i = 0; i < 320; i += candidate) isComposite[i] = candidate;
+                    hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
+                    k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+                }
+            }
+            ascii += '\x80';
+            while (ascii.length % 64 - 56) ascii += '\x00';
+            for (let i = 0; i < ascii.length; i++) {
+                const j = ascii.charCodeAt(i);
+                if (j >> 8) return '';
+                words[i >> 2] |= j << (((3 - i) % 4) * 8);
+            }
+            words[words.length] = (asciiBitLength / maxWord) | 0;
+            words[words.length] = asciiBitLength;
+            for (let j = 0; j < words.length;) {
+                const w = words.slice(j, (j += 16));
+                const oldHash = hash;
+                hash = hash.slice(0, 8);
+                for (let i = 0; i < 64; i++) {
+                    const w15 = w[i - 15];
+                    const w2 = w[i - 2];
+                    const a = hash[0];
+                    const e = hash[4];
+                    const temp1 = hash[7]
+                        + (rightRotate(e, 6) ^ rightRotate(e, 11) ^ rightRotate(e, 25))
+                        + ((e & hash[5]) ^ (~e & hash[6]))
+                        + k[i]
+                        + (w[i] = (i < 16) ? w[i] : (w[i - 16]
+                            + (rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3))
+                            + w[i - 7]
+                            + (rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10))) | 0);
+                    const temp2 = (rightRotate(a, 2) ^ rightRotate(a, 13) ^ rightRotate(a, 22))
+                        + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+                    hash = [(temp1 + temp2) | 0].concat(hash);
+                    hash[4] = (hash[4] + temp1) | 0;
+                }
+                for (let i = 0; i < 8; i++) {
+                    hash[i] = (hash[i] + oldHash[i]) | 0;
+                }
+            }
+            for (let i = 0; i < 8; i++) {
+                for (let j = 3; j + 1; j--) {
+                    const b = (hash[i] >> (j * 8)) & 255;
+                    result.push((b < 16 ? 0 : '') + b.toString(16));
+                }
+            }
+            return result.join('');
+        }
+
+        function syncProfiles() {
+            profiles = authUsers
+                .filter(u => u.configured)
+                .map(u => ({
+                    id: u.email,
+                    email: u.email,
+                    name: u.name,
+                    emoji: u.emoji,
+                    colorIndex: u.colorIndex,
+                    credential: u.credential || null
+                }));
+            return profiles;
+        }
+
+        function renderProfileList() {
+            renderProfilePicker();
+            updateBiometricSupportText();
+        }
+
+        function renderProfilePicker() {
+            const grid = document.getElementById('profile-picker-grid');
+            if (!grid) return;
+            const items = profiles.map(p => `
+                <button onclick="selectProfileForCheckin('${p.id}')" class="group flex flex-col items-center gap-2">
+                    <div class="relative">
+                        <div class="w-16 h-16 rounded-full bg-gradient-to-tr ${AVATAR_COLORS[p.colorIndex].bg} flex items-center justify-center text-3xl shadow-lg ring-2 ring-offset-2 ring-offset-zinc-950 ${AVATAR_COLORS[p.colorIndex].ring} group-hover:ring-white transition-all">
+                            <span>${p.emoji}</span>
+                        </div>
+                        ${p.credential ? '<span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-zinc-950 flex items-center justify-center"><i data-lucide="fingerprint" class="w-3 h-3 text-white"></i></span>' : ''}
+                    </div>
+                    <span class="text-xs font-bold text-zinc-300">${p.name}</span>
+                </button>
+            `).join('');
+
+            const addBtn = `
+                <button onclick="openLoginModal()" class="flex flex-col items-center gap-2 group">
+                    <div class="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 border-2 border-dashed border-zinc-600 group-hover:border-indigo-400 group-hover:text-indigo-400 transition-all">
+                        <i data-lucide="plus" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xs font-bold text-zinc-500 group-hover:text-zinc-300">Nuovo</span>
+                </button>`;
+
+            grid.innerHTML = items + addBtn;
+            lucide.createIcons();
+        }
+
+        function renderAvatarPicker() {
+            const container = document.getElementById('profile-avatar-picker');
+            if (!container) return;
+            container.innerHTML = AVATAR_EMOJIS.map((e, i) => `
+                <button type="button" onclick="selectAvatar(${i})" id="avatar-opt-${i}"
+                    class="w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-indigo-500 transition-all ${i === selectedAvatarIndex ? 'ring-2 ring-indigo-500 bg-indigo-500/10' : ''}">
+                    ${e}
+                </button>
+            `).join('');
+        }
+
+        function renderColorPicker() {
+            const container = document.getElementById('profile-color-picker');
+            if (!container) return;
+            container.innerHTML = AVATAR_COLORS.map((c, i) => `
+                <button type="button" onclick="selectColor(${i})" id="color-opt-${i}"
+                    class="w-8 h-8 rounded-full bg-gradient-to-tr ${c.bg} border-2 border-transparent transition-all ${selectedColorIndex === i ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110' : ''}"></button>
+            `).join('');
+        }
+
+        function updateBiometricSupportText() {
+            const el = document.getElementById('biometric-support-text');
+            if (!el) return;
+            if (isWebAuthnSupported()) {
+                el.innerHTML = '<i data-lucide="fingerprint" class="w-3 h-3 inline"></i> Biometria disponibile su questo dispositivo';
+            } else {
+                el.innerHTML = 'Questo dispositivo non supporta la biometria. Accedi con password.';
+            }
+            lucide.createIcons();
+        }
+
+        function selectAvatar(i) { selectedAvatarIndex = i; renderAvatarPicker(); }
+        function selectColor(i) { selectedColorIndex = i; renderColorPicker(); }
+
+        function ensureAdminProfile() {
+            loadAuth();
+            if (!authUsers.some(u => u.email === ADMIN_EMAIL)) {
+                authUsers.push({
+                    email: ADMIN_EMAIL, name: 'Admin', passwordHash: ADMIN_PASSWORD_HASH,
+                    emoji: '🛡️', colorIndex: 0, configured: true
+                });
+                saveAuth();
+            }
+            syncProfiles();
+        }
+
+        // --- Entry Gate (all'avvio: come il profilo di Netflix) ---
+        function openEntryGate() {
+            ensureAdminProfile();
+            loadAuth();
+            syncProfiles();
+            document.getElementById('profile-setup-modal')?.classList.add('hidden');
+            if (profiles.length === 0) {
+                openLoginModal();
+            } else {
+                openProfilePicker();
+            }
+        }
+
+        function enterApp(user) {
+            currentUser = user;
+            currentUser.email = currentUser.email || user.id;
+            closeProfilePicker();
+            closeLoginModal();
+            closePassModal();
+            closeAdminModal();
+            document.getElementById('profile-setup-modal')?.classList.add('hidden');
+            try { renderHeaderUserChip(); } catch (e) {}
+            sendWsHello();
+            showAlert("Benvenuto " + user.name + "!", "Accesso effettuato. Inquadra il QR all'ingresso per registrare il check-in.");
+            setTimeout(closeCustomAlert, 2600);
+        }
+
+        function renderHeaderUserChip() {
+            const chip = document.getElementById('header-user-chip');
+            const av = document.getElementById('header-user-avatar');
+            const nm = document.getElementById('header-user-name');
+            renderKeyAccess();
+            if (!chip) return;
+            if (!currentUser) {
+                chip.classList.add('hidden');
+                chip.classList.remove('flex');
+                return;
+            }
+            chip.classList.remove('hidden');
+            chip.classList.add('flex');
+            av.textContent = currentUser.emoji || '💪';
+            av.className = "w-7 h-7 rounded-full bg-gradient-to-tr " + (AVATAR_COLORS[currentUser.colorIndex] ? AVATAR_COLORS[currentUser.colorIndex].bg : 'from-indigo-500 to-purple-500') + " flex items-center justify-center text-sm";
+            nm.textContent = currentUser.name;
+            lucide.createIcons();
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            renderHeaderUserChip();
+            sendWsHello();
+            openEntryGate();
+        }
+
+        function currentUserProfile() {
+            if (!currentUser) return null;
+            return {
+                id: currentUser.email, name: currentUser.name, emoji: currentUser.emoji,
+                colorIndex: currentUser.colorIndex, credential: currentUser.credential || null
+            };
+        }
+
+        // --- Check-in Gate: primo accesso -> login; altrimenti -> picker profili ---
+        function openAuthGate() {
+            ensureAdminProfile();
+            loadAuth();
+            syncProfiles();
+            if (profiles.length === 0) {
+                openLoginModal();
+            } else {
+                openProfilePicker();
+            }
+        }
+
+        function openProfilePicker() {
+            ensureAdminProfile();
+            loadAuth();
+            syncProfiles();
+            pendingAuthUser = null;
+            manageProfilesMode = false;
+            renderProfilePicker();
+            document.getElementById('profile-picker-modal').classList.remove('hidden');
+        }
+
+        function closeProfilePicker() {
+            document.getElementById('profile-picker-modal').classList.add('hidden');
+        }
+
+        // --- Login (primo accesso: email + password) ---
+        function openLoginModal() {
+            loginMode = 'member';
+            document.getElementById('auth-login-title').textContent = 'Primo Accesso';
+            document.getElementById('auth-email-input').disabled = false;
+            document.getElementById('auth-email-input').value = '';
+            document.getElementById('auth-pass-input').value = '';
+            document.getElementById('auth-login-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('auth-email-input').focus(), 50);
+        }
+
+        function closeLoginModal() {
+            document.getElementById('auth-login-modal').classList.add('hidden');
+        }
+
+        function openAdminLogin() {
+            closeProfilePicker();
+            closeLoginModal();
+            loginMode = 'admin';
+            document.getElementById('auth-login-title').textContent = 'Accesso Amministratore';
+            document.getElementById('auth-email-input').disabled = true;
+            document.getElementById('auth-email-input').value = ADMIN_EMAIL;
+            document.getElementById('auth-pass-input').value = '';
+            document.getElementById('auth-login-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('auth-pass-input').focus(), 50);
+        }
+
+        async function attemptLogin() {
+            try {
+            await mergeServerUsersBeforeAuth();
+            const email = document.getElementById('auth-email-input').value.trim().toLocaleLowerCase();
+            const pass = document.getElementById('auth-pass-input').value;
+            if (!email || !pass) {
+                showAlert("Campi mancanti", "Inserisci email e password.", true);
+                return;
+            }
+
+            if (loginMode === 'admin' || email === ADMIN_EMAIL) {
+                const adminHash = await hashPassword(pass, email);
+                if (adminHash === ADMIN_PASSWORD_HASH) {
+                    closeLoginModal();
+                    enterApp({ id: ADMIN_EMAIL, name: 'Admin', emoji: '🛡️', colorIndex: 0, credential: null });
+                    return;
+                }
+                if (loginMode === 'admin') {
+                    showAlert("Accesso negato", "Credenziali amministratore errate.", true);
+                    return;
+                }
+            }
+
+            loadAuth();
+            const user = authUsers.find(u => u.email === email);
+            if (!user) {
+                showAlert("Utente non trovato", "Questa email non è registrata. Contatta l'amministratore.", true);
+                return;
+            }
+            const userHash = await hashPassword(pass, email);
+            if (userHash !== user.passwordHash) {
+                showAlert("Password errata", "La password inserita non è corretta.", true);
+                return;
+            }
+
+            closeLoginModal();
+            pendingAuthUser = user;
+            if (user.configured) {
+                enterApp({
+                    id: user.email, name: user.name, emoji: user.emoji,
+                    colorIndex: user.colorIndex, credential: user.credential || null
+                });
+            } else {
+                openProfileSetup();
+            }
+            } catch (err) {
+                closeLoginModal();
+                closePassModal();
+                closeProfilePicker();
+                document.getElementById('profile-setup-modal')?.classList.add('hidden');
+                showAlert("Errore di accesso", (err && err.message) ? err.message : "Operazione non riuscita. Riprova o usa un browser aggiornato.", true);
+            }
+        }
+
+        // --- Setup profilo (dopo il primo accesso riuscito) ---
+        function openProfileSetup() {
+            selectedAvatarIndex = 0;
+            selectedColorIndex = 0;
+            document.getElementById('profile-name-input').value = pendingAuthUser.name || '';
+            document.getElementById('profile-biometric-check').checked = false;
+            renderAvatarPicker();
+            renderColorPicker();
+            document.getElementById('profile-biometric-hint').textContent =
+                isWebAuthnSupported() ? 'Impronta, Face ID o Windows Hello.' : 'Non supportata su questo dispositivo.';
+            document.getElementById('profile-setup-modal').classList.remove('hidden');
+        }
+
+        async function saveProfileSetup() {
+            if (!pendingAuthUser) return;
+            const name = document.getElementById('profile-name-input').value.trim() || pendingAuthUser.name;
+            const wantBiometric = document.getElementById('profile-biometric-check').checked;
+            let credential = pendingAuthUser.credential || null;
+            if (wantBiometric && !credential) {
+                credential = await promptRegisterBiometric(name);
+            }
+
+            loadAuth();
+            const idx = authUsers.findIndex(u => u.email === pendingAuthUser.email);
+            if (idx === -1) {
+                closeLoginModal();
+                showAlert("Errore", "Utente non trovato.", true);
+                return;
+            }
+            authUsers[idx].name = name;
+            authUsers[idx].emoji = AVATAR_EMOJIS[selectedAvatarIndex];
+            authUsers[idx].colorIndex = selectedColorIndex;
+            authUsers[idx].credential = credential;
+            authUsers[idx].configured = true;
+            saveAuth();
+            syncUsersToServer();
+
+            document.getElementById('profile-setup-modal').classList.add('hidden');
+            enterApp({
+                id: pendingAuthUser.email, name, emoji: authUsers[idx].emoji,
+                colorIndex: authUsers[idx].colorIndex, credential
+            });
+            pendingAuthUser = null;
+        }
+
+        // --- Admin Panel ---
+        function openAdminPanel() {
+            loadAuth();
+            renderAdminUsers();
+            renderAdminGymConfig();
+            switchAdminView('users');
+            document.getElementById('admin-modal').classList.remove('hidden');
+            openAdminRealtime();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            if (!currentUser) openEntryGate();
+        }
+
+        async function adminCreateUser() {
+            try {
+            const name = document.getElementById('admin-new-name').value.trim();
+            const email = document.getElementById('admin-new-email').value.trim().toLocaleLowerCase();
+            const pass = document.getElementById('admin-new-pass').value;
+            if (!name || !email || !pass) {
+                showAlert("Dati mancanti", "Compila nome, email e password.", true);
+                return;
+            }
+            if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+                showAlert("Email non valida", "Inserisci un indirizzo email valido.", true);
+                return;
+            }
+            loadAuth();
+            if (authUsers.some(u => u.email === email)) {
+                showAlert("Email esistente", "Esiste già un utente con questa email.", true);
+                return;
+            }
+            const passwordHash = await hashPassword(pass, email);
+            authUsers.push({ email, name, passwordHash, configured: false });
+            saveAuth();
+            syncUsersToServer();
+            document.getElementById('admin-new-name').value = '';
+            document.getElementById('admin-new-email').value = '';
+            document.getElementById('admin-new-pass').value = '';
+            renderAdminUsers();
+            showAlert("Utente creato", `"${name}" può ora accedere inserendo email e password al primo check-in.`);
+            } catch (err) {
+                showAlert("Errore", (err && err.message) ? err.message : "Creazione utente non riuscita.", true);
+            }
+        }
+
+        function adminDeleteUser(email) {
+            if (!window.confirm('Eliminare definitivamente questo utente?')) return;
+            loadAuth();
+            authUsers = authUsers.filter(u => u.email !== email);
+            saveAuth();
+            syncUsersToServer();
+            renderAdminUsers();
+        }
+
+        async function adminResetPassword(email) {
+            const newPass = window.prompt('Nuova password per ' + email + ' (min 4 caratteri):', '');
+            if (!newPass) return;
+            if (newPass.length < 4) {
+                showAlert("Password troppo corta", "Minimo 4 caratteri.", true);
+                return;
+            }
+            loadAuth();
+            const user = authUsers.find(u => u.email === email);
+            if (!user) return;
+            const newHash = await hashPassword(newPass, email);
+            if (serverReachableNow()) {
+                const d = await apiFetch('/api/reset-password', { method: 'POST', body: { email, newPassword: newPass } });
+                if (d && d.ok && Array.isArray(d.users)) {
+                    mergeServerUsers(d.users);
+                    showAlert("Password aggiornata", `La password di ${email} è stata reimpostata.`);
+                } else {
+                    showAlert("Errore", "Reset non riuscito sul server.", true);
+                }
+            } else {
+                user.passwordHash = newHash;
+                saveAuth();
+                showAlert("Password aggiornata", `Reimpostata solo in locale (server non raggiungibile). Avvia l'app con npm start per la sincronizzazione su tutti i dispositivi.`);
+            }
+            renderAdminUsers();
+        }
+
+        function renderAdminUsers() {
+            const list = document.getElementById('admin-user-list');
+            const count = document.getElementById('admin-user-count');
+            if (!list || !count) return;
+            count.textContent = authUsers.length;
+            if (!authUsers.length) {
+                list.innerHTML = '<p class="text-xs text-zinc-400 italic text-center py-3">Nessun utente creato. Crea il primo utente qui sopra.</p>';
+                return;
+            }
+            list.innerHTML = authUsers.map(u => `
+                <div class="p-2.5 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 text-xs">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="min-w-0">
+                            <p class="font-bold truncate">${u.name || '—'} <span title="${u.configured ? 'Profilo configurato' : 'In attesa di primo accesso'}" class="${u.configured ? 'text-emerald-500' : 'text-amber-500'}">${u.configured ? '●' : '◐'}</span></p>
+                            <p class="text-zinc-500 font-mono text-[10px] truncate">${u.email}</p>
+                        </div>
+                        <button onclick="adminDeleteUser('${u.email}')" class="flex-shrink-0 text-[10px] text-rose-500 hover:bg-rose-500/10 px-2 py-1 rounded-lg font-bold">Elimina</button>
+                    </div>
+                    <button onclick="adminResetPassword('${u.email}')" class="mt-2 w-full text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/10 px-2 py-1.5 rounded-lg border border-indigo-500/20 flex items-center justify-center gap-1">
+                        <i data-lucide="key-round" class="w-3 h-3"></i> Reimposta password
+                    </button>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // ================= BIOMETRIA (WEBAUTHN) =================
+        function bufferToB64url(buf) {
+            const bytes = new Uint8Array(buf);
+            let bin = '';
+            bytes.forEach(b => bin += String.fromCharCode(b));
+            return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function b64urlToBuffer(str) {
+            const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            const padding = '='.repeat((4 - base64.length % 4) % 4);
+            const bin = atob(base64 + padding);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        function webauthnRpid() {
+            return (window.location.hostname || 'localhost').toLowerCase();
+        }
+
+        function isWebAuthnSupported() {
+            return !!window.PublicKeyCredential &&
+                !!navigator.credentials &&
+                typeof navigator.credentials.get === 'function';
+        }
+
+        async function promptRegisterBiometric(displayName) {
+            if (!isWebAuthnSupported()) {
+                showAlert("Biometria non disponibile", "Questo dispositivo o browser non supporta la biometria (WebAuthn).", true);
+                return null;
+            }
+            try {
+                const userId = new TextEncoder().encode('gh-profile:' + displayName.toLocaleLowerCase().trim());
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        rp: { name: 'Gym House', id: webauthnRpid() },
+                        user: {
+                            id: userId,
+                            name: displayName,
+                            displayName
+                        },
+                        pubKeyCredParams: [
+                            { type: 'public-key', alg: -7 },
+                            { type: 'public-key', alg: -257 }
+                        ],
+                        authenticatorSelection: {
+                            authenticatorAttachment: 'platform',
+                            userVerification: 'required'
+                        },
+                        timeout: 60000,
+                        attestation: 'none'
+                    }
+                });
+                if (!credential) return null;
+                return {
+                    id: credential.id,
+                    rawId: bufferToB64url(credential.rawId)
+                };
+            } catch (err) {
+                showAlert("Registrazione biometrica annullata", err.name === 'NotAllowedError' ? 'Hai annullato la richiesta.' : (err.message || 'Errore durante la registrazione biometrica.'), true);
+                return null;
+            }
+        }
+
+        async function verifyBiometric(profile) {
+            if (!profile.credential || !isWebAuthnSupported()) return true;
+            try {
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        rpId: webauthnRpid(),
+                        allowCredentials: [{
+                            type: 'public-key',
+                            id: b64urlToBuffer(profile.credential.rawId)
+                        }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    }
+                });
+                return !!assertion;
+            } catch (err) {
+                return false;
+            }
+        }
+
+        // ================= CHECK-IN FLOW =================
+        function selectProfileForCheckin(profileId) {
+            if (manageProfilesMode) return;
+            const profile = profiles.find(p => p.id === profileId);
+            if (!profile) return;
+
+            const avatarEl = document.getElementById('pass-profile-avatar');
+            avatarEl.className = "w-16 h-16 rounded-full bg-gradient-to-tr " + AVATAR_COLORS[profile.colorIndex].bg + " flex items-center justify-center text-3xl mx-auto shadow-lg ring-2 " + AVATAR_COLORS[profile.colorIndex].ring + " ring-offset-2 ring-offset-white dark:ring-offset-zinc-900";
+            avatarEl.textContent = profile.emoji;
+            document.getElementById('pass-profile-name').textContent = profile.name;
+            document.getElementById('pass-input').value = '';
+            pendingPassEmail = profile.email;
+            document.getElementById('profile-pass-modal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('pass-input').focus(), 50);
+        }
+
+        function closePassModal() {
+            document.getElementById('profile-pass-modal').classList.add('hidden');
+            pendingPassEmail = null;
+        }
+
+        async function confirmPassEntry() {
+            try {
+            await mergeServerUsersBeforeAuth();
+            const pass = document.getElementById('pass-input').value;
+            if (!pass) {
+                showAlert("Password mancante", "Inserisci la tua password.", true);
+                return;
+            }
+            if (!pendingPassEmail) return;
+
+            loadAuth();
+            const user = authUsers.find(u => u.email === pendingPassEmail);
+            if (!user) {
+                closePassModal();
+                showAlert("Errore", "Profilo non trovato sul dispositivo.", true);
+                return;
+            }
+
+            const userHash = await hashPassword(pass, user.email);
+            if (userHash !== user.passwordHash) {
+                showAlert("Password errata", "La password inserita non è corretta.", true);
+                return;
+            }
+
+            closePassModal();
+            enterApp({
+                id: user.email, name: user.name, emoji: user.emoji,
+                colorIndex: user.colorIndex, credential: user.credential || null
+            });
+            } catch (err) {
+                closePassModal();
+                closeLoginModal();
+                closeProfilePicker();
+                document.getElementById('profile-setup-modal')?.classList.add('hidden');
+                showAlert("Errore", (err && err.message) ? err.message : "Operazione non riuscita. Riprova.", true);
+            }
+        }
+
+        async function performBiometricThenCheckin(profile) {
+            if (profile.credential && isWebAuthnSupported()) {
+                showAlert("Verifica Biometrica", `${profile.name}, conferma la tua identità con il dispositivo.`, false);
+                const ok = await verifyBiometric(profile);
+                closeCustomAlert();
+                if (!ok) {
+                    showAlert("Verifica fallita", "La verifica biometrica non è stata completata. Riprova.", true);
+                    return;
+                }
+            }
+
+            recordSuccessfulCheckin(profile);
+        }
+
+        // Geofencing GPS Verification Anti-Fake
+        function performGpsCheckin(scannedUrl) {
+            if (!navigator.geolocation) {
+                showAlert("GPS Non Supportato", "La geolocalizzazione non è supportata dal tuo browser.", true);
+                return;
+            }
+
+            showAlert("Verifica Posizione in corso...", "Stiamo verificando che ti trovi fisicamente all'interno della Gym House.");
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    closeCustomAlert();
+                    doCheckinWithSession();
+                },
+                (error) => {
+                    closeCustomAlert();
+                    doCheckinWithSession();
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+            );
+        }
+
+        function doCheckinWithSession() {
+            const profile = currentUserProfile();
+            if (!profile) {
+                showAlert("Accesso richiesto", "Effettua prima l'accesso dal tuo profilo.", true);
+                openEntryGate();
+                return;
+            }
+            performBiometricThenCheckin(profile);
+        }
+
+        function recordSuccessfulCheckin(profile) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString();
+            const profileName = profile ? profile.name : 'Profilo';
+
+            const modal = document.getElementById('checkin-success-modal');
+            const badge = document.getElementById('checkin-time-badge');
+            document.getElementById('checkin-time-badge').textContent = `${dateStr} - ${timeStr}`;
+
+            const profileBadge = document.createElement('span');
+            profileBadge.className = "inline-block text-xs font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full mx-1";
+            profileBadge.textContent = `${profileName} ✓`;
+
+            modal.append(profileBadge);
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                if (profileBadge.parentNode) profileBadge.remove();
+                if (badge.textContent) badge.textContent = '';
+            }, 6000);
+
+            let history = JSON.parse(localStorage.getItem('gymhouse_checkin_history') || '[]');
+            history.unshift({ time: timeStr, date: dateStr, timestamp: Date.now(), profile: profileName });
+            localStorage.setItem('gymhouse_checkin_history', JSON.stringify(history));
+
+            loadCheckinHistory();
+        }
+
+        function loadCheckinHistory() {
+            const list = document.getElementById('checkin-history-list');
+            let history = JSON.parse(localStorage.getItem('gymhouse_checkin_history') || '[]');
+
+            if (history.length === 0) {
+                list.innerHTML = `<p class="text-xs text-zinc-400 italic text-center py-2">Nessun ingresso registrato.</p>`;
+                return;
+            }
+
+            list.innerHTML = history.slice(0, 8).map(item => `
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 text-xs font-semibold">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
+                        <span class="truncate">
+                            <b class="text-indigo-600 dark:text-indigo-400">${item.profile || 'Profilo'}</b> · Ingresso Verificato (GPS)
+                        </span>
+                    </div>
+                    <span class="text-zinc-500 font-mono text-[11px] flex-shrink-0">${item.date} - ${item.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function clearCheckinHistory() {
+            localStorage.removeItem('gymhouse_checkin_history');
+            loadCheckinHistory();
+        }
+
+        function startCameraScanner() {
+            if (html5QrScanner) return;
+
+            html5QrScanner = new Html5Qrcode("reader");
+            html5QrScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 200, height: 200 } },
+                (decodedText) => {
+                    performGpsCheckin(decodedText);
+                    stopCameraScanner();
+                },
+                () => {}
+            ).catch(() => {
+                console.log("Fotocamera non attiva o non disponibile.");
+            });
+        }
+
+        function stopCameraScanner() {
+            if (html5QrScanner) {
+                html5QrScanner.stop().then(() => {
+                    html5QrScanner.clear();
+                    html5QrScanner = null;
+                }).catch(() => {
+                    html5QrScanner = null;
+                });
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showAlert("Copiato", "Contenuto copiato negli appunti!");
+        }
+
+        // ================= PROFILO UTENTE (edit nome/avatar/colore) =================
+        let editAvatarIndex = 0;
+        let editColorIndex = 0;
+
+        function loadProfileTab() {
+            if (!currentUser) return;
+            document.getElementById('profile-edit-email').textContent = currentUser.email || '';
+            document.getElementById('profile-edit-name').value = currentUser.name || '';
+            const big = document.getElementById('profile-edit-avatar-big');
+            big.textContent = currentUser.emoji || '💪';
+            big.className = "w-14 h-14 rounded-full bg-gradient-to-tr " + (AVATAR_COLORS[currentUser.colorIndex] ? AVATAR_COLORS[currentUser.colorIndex].bg : 'from-indigo-500 to-purple-500') + " flex items-center justify-center text-2xl shadow-lg flex-shrink-0";
+            editAvatarIndex = AVATAR_EMOJIS.indexOf(currentUser.emoji);
+            if (editAvatarIndex < 0) editAvatarIndex = 0;
+            editColorIndex = currentUser.colorIndex || 0;
+            renderEditAvatarPicker();
+            renderEditColorPicker();
+            const adminCard = document.getElementById('profile-admin-card');
+            if (adminCard) adminCard.classList.toggle('hidden', currentUser.email !== ADMIN_EMAIL);
+            lucide.createIcons();
+        }
+
+        function renderEditAvatarPicker() {
+            const container = document.getElementById('profile-edit-avatar-picker');
+            if (!container) return;
+            container.innerHTML = AVATAR_EMOJIS.map((e, i) => `
+                <button type="button" onclick="selectEditAvatar(${i})" id="edit-avatar-opt-${i}"
+                    class="w-10 h-10 rounded-xl text-xl flex items-center justify-center bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 hover:border-indigo-500 transition-all ${i === editAvatarIndex ? 'ring-2 ring-indigo-500 bg-indigo-500/10' : ''}">
+                    ${e}
+                </button>
+            `).join('');
+        }
+
+        function renderEditColorPicker() {
+            const container = document.getElementById('profile-edit-color-picker');
+            if (!container) return;
+            container.innerHTML = AVATAR_COLORS.map((c, i) => `
+                <button type="button" onclick="selectEditColor(${i})" id="edit-color-opt-${i}"
+                    class="w-8 h-8 rounded-full bg-gradient-to-tr ${c.bg} border-2 border-transparent transition-all ${editColorIndex === i ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110' : ''}"></button>
+            `).join('');
+        }
+
+        function selectEditAvatar(i) {
+            editAvatarIndex = i;
+            renderEditAvatarPicker();
+            const big = document.getElementById('profile-edit-avatar-big');
+            if (big) big.textContent = AVATAR_EMOJIS[i];
+        }
+
+        function selectEditColor(i) {
+            editColorIndex = i;
+            renderEditColorPicker();
+            const big = document.getElementById('profile-edit-avatar-big');
+            if (big && AVATAR_COLORS[i]) big.className = "w-14 h-14 rounded-full bg-gradient-to-tr " + AVATAR_COLORS[i].bg + " flex items-center justify-center text-2xl shadow-lg flex-shrink-0";
+        }
+
+        function saveProfileEdit() {
+            if (!currentUser) return;
+            const name = document.getElementById('profile-edit-name').value.trim();
+            if (!name) { showAlert("Nome mancante", "Inserisci un nome per il profilo.", true); return; }
+            loadAuth();
+            const idx = authUsers.findIndex(u => u.email === currentUser.email);
+            if (idx === -1) { showAlert("Errore", "Profilo non trovato.", true); return; }
+            authUsers[idx].name = name;
+            authUsers[idx].emoji = AVATAR_EMOJIS[editAvatarIndex];
+            authUsers[idx].colorIndex = editColorIndex;
+            saveAuth();
+            syncUsersToServer();
+            currentUser.name = name;
+            currentUser.emoji = AVATAR_EMOJIS[editAvatarIndex];
+            currentUser.colorIndex = editColorIndex;
+            renderHeaderUserChip();
+            showAlert("Profilo aggiornato 🤙", "Nome, avatar e colore salvati.");
+            setTimeout(closeCustomAlert, 2200);
+        }
+
+        // ================= REAL-TIME (backend Node) =================
+        let serverOnline = false;
+        let wsConn = null;
+        let wsReconnectTimer = null;
+
+        function serverReachableNow() {
+            return serverOnline;
+        }
+
+        function apiFetch(apiPath, opts) {
+            const init = opts || {};
+            const isForm = init.body instanceof FormData;
+            return fetch(apiPath, {
+                method: init.method || 'GET',
+                headers: isForm ? undefined : { 'Content-Type': 'application/json' },
+                body: isForm ? init.body : (init.body ? JSON.stringify(init.body) : undefined)
+            }).then(r => r.ok ? r.json() : null).catch(() => null);
+        }
+
+        function initRealtime() {
+            apiFetch('/api/users').then((data) => {
+                if (data && data.ok && Array.isArray(data.users)) {
+                    serverOnline = true;
+                    mergeServerUsers(data.users);
+                    connectWebSocket();
+                    openAdminRealtime();
+                    loadServerKeys();
+                }
+            }).catch(() => {});
+        }
+
+        function mergeServerUsers(serverUsers) {
+            const byEmail = new Map();
+            authUsers.forEach(u => byEmail.set(u.email, u));
+            (serverUsers || []).forEach(su => {
+                if (!su || !su.email) return;
+                const local = byEmail.get(su.email);
+                if (!local) {
+                    byEmail.set(su.email, {
+                        email: su.email,
+                        name: su.name || '',
+                        passwordHash: su.passwordHash || null,
+                        emoji: su.emoji || '💪',
+                        colorIndex: typeof su.colorIndex === 'number' ? su.colorIndex : 0,
+                        credential: su.credential || null,
+                        configured: !!su.configured
+                    });
+                } else {
+                    if (su.passwordHash && su.passwordHash !== local.passwordHash) local.passwordHash = su.passwordHash;
+                    if (!local.configured && su.configured) local.configured = true;
+                    if (su.name) local.name = su.name;
+                    if (su.emoji) local.emoji = su.emoji;
+                    if (typeof su.colorIndex === 'number') local.colorIndex = su.colorIndex;
+                }
+            });
+            authUsers = Array.from(byEmail.values());
+            syncProfiles();
+            saveAuth();
+            renderProfileList();
+        }
+
+        async function mergeServerUsersBeforeAuth() {
+            if (serverOnline) return;
+            const data = await apiFetch('/api/users');
+            if (data && data.ok && Array.isArray(data.users)) {
+                serverOnline = true;
+                mergeServerUsers(data.users);
+                connectWebSocket();
+            }
+        }
+
+        function syncUsersToServer() {
+            if (!serverReachableNow()) return;
+            apiFetch('/api/users/sync', { method: 'POST', body: { users: authUsers } }).then((data) => {
+                if (data && data.ok && Array.isArray(data.users)) mergeServerUsers(data.users);
+            }).catch(() => {});
+        }
+
+        // Vercel doesn't support WebSocket, using polling instead
+        function connectWebSocket() {
+            // Disabled for Vercel - using polling instead
+            console.log('WebSocket disabled for Vercel deployment');
+            startPolling();
+        }
+
+        function sendWsHello() {
+            // Disabled for Vercel
+        }
+
+        function scheduleWsReconnect() {
+            // Disabled for Vercel
+        }
+
+        function handleWsMessage(msg) {
+            // Disabled for Vercel
+        }
+
+        // Polling for real-time updates (Vercel compatible)
+        let pollingInterval = null;
+        let lastNotifyCheck = null;
+        let lastVideoCheck = null;
+        let lastProgramCheck = null;
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(checkForUpdates, 5000); // Check every 5 seconds
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        async function checkForUpdates() {
+            try {
+                // Check for new notifications/videos/programs
+                const response = await fetch('/api/updates');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.lastNotify && data.lastNotify.date !== lastNotifyCheck) {
+                        showLiveNotify(data.lastNotify.title, data.lastNotify.body);
+                        notifySystem(data.lastNotify.title, data.lastNotify.body);
+                        lastNotifyCheck = data.lastNotify.date;
+                    }
+                    
+                    if (data.lastVideo && data.lastVideo.date !== lastVideoCheck) {
+                        showBroadcastVideo(data.lastVideo.url, data.lastVideo.title);
+                        lastVideoCheck = data.lastVideo.date;
+                    }
+                    
+                    if (data.lastProgram && data.lastProgram.date !== lastProgramCheck) {
+                        showProgramOverlay(data.lastProgram.title, data.lastProgram.body);
+                        notifySystem(data.lastProgram.title, data.lastProgram.body);
+                        lastProgramCheck = data.lastProgram.date;
+                    }
+                }
+            } catch (e) {
+                // Silently fail
+            }
+        }
+
+        // --- UI: pannello admin In Tempo Reale ---
+        function switchAdminView(view) {
+            const usersView = document.getElementById('admin-view-users');
+            const rtView = document.getElementById('admin-view-realtime');
+            const btnUsers = document.getElementById('admin-view-btn-users');
+            const btnRt = document.getElementById('admin-view-btn-realtime');
+            const base = "flex-1 py-2 text-xs font-extrabold rounded-xl transition-all ";
+            const active = "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-sm";
+            const idle = "text-zinc-500 dark:text-zinc-400";
+            if (view === 'realtime') {
+                usersView.classList.add('hidden');
+                rtView.classList.remove('hidden');
+                btnUsers.className = base + idle;
+                btnRt.className = base + active;
+                openAdminRealtime();
+            } else {
+                rtView.classList.add('hidden');
+                usersView.classList.remove('hidden');
+                btnUsers.className = base + active;
+                btnRt.className = base + idle;
+            }
+        }
+
+        function openAdminRealtime() {
+            const chip = document.getElementById('rt-server-chip');
+            if (!chip) return;
+            if (serverOnline) {
+                chip.textContent = '● SERVER ONLINE';
+                chip.className = "text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/25";
+            } else {
+                chip.textContent = '○ SERVER OFFLINE';
+                chip.className = "text-[10px] font-bold px-2 py-1 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/25";
+            }
+            if (serverOnline) {
+                apiFetch('/api/online').then((d) => {
+                    if (d && d.ok) renderOnlineList(d.online || [], d.total || 0);
+                }).catch(() => {});
+            }
+        }
+
+        function renderOnlineList(online, total) {
+            const countEl = document.getElementById('rt-online-count');
+            const listEl = document.getElementById('rt-online-list');
+            if (countEl) countEl.textContent = total || (online || []).length || 0;
+            if (!listEl) return;
+            const seen = new Set();
+            const rows = (online || []).filter(u => {
+                if (!u || !u.email || seen.has(u.email)) return false;
+                seen.add(u.email);
+                return true;
+            });
+            if (!rows.length) {
+                listEl.innerHTML = `<p class="text-[11px] text-zinc-500 italic">Nessuno connesso al momento.</p>`;
+                return;
+            }
+            const fmt = (t) => {
+                if (!t) return '';
+                const d = new Date(t);
+                return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+            };
+            listEl.innerHTML = rows.map(u => `
+                <div class="flex items-center gap-2.5 rounded-xl bg-white dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <span class="w-8 h-8 rounded-full bg-gradient-to-tr ${AVATAR_COLORS[u.colorIndex] ? AVATAR_COLORS[u.colorIndex].bg : 'from-indigo-500 to-purple-500'} flex items-center justify-center text-sm flex-shrink-0">${u.emoji || '💪'}</span>
+                    <div class="min-w-0 flex-1">
+                        <p class="text-xs font-bold truncate">${esc(u.name || u.email)}</p>
+                        <p class="text-[10px] text-zinc-500">da ${fmt(u.since || u.lastSeen)}</p>
+                    </div>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                </div>`).join('');
+        }
+
+        function requestNotifyPermission() {
+            if (!('Notification' in window)) return Promise.resolve(false);
+            if (Notification.permission === 'granted') return Promise.resolve(true);
+            if (Notification.permission === 'denied') return Promise.resolve(false);
+            return Notification.requestPermission().then((p) => p === 'granted').catch(() => false);
+        }
+
+        function notifySystem(title, body) {
+            try {
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                const n = new Notification(title || 'Gym House', { body: body || '', tag: 'gymhouse' });
+                n.onclick = () => { window.focus(); n.close(); };
+                setTimeout(() => n.close(), 10000);
+            } catch (e) {}
+        }
+
+        function adminSendNotify() {
+            if (!serverReachableNow()) {
+                showAlert("Server non raggiungibile", "Avvia l'app con 'npm start' per usare le notifiche in tempo reale.", true);
+                return;
+            }
+            const title = document.getElementById('rt-notify-title').value.trim() || 'Notifica Gym House';
+            const body = document.getElementById('rt-notify-body').value.trim();
+            if (!body) {
+                showAlert("Messaggio vuoto", "Scrivi il testo della notifica.", true);
+                return;
+            }
+            apiFetch('/api/notify', { method: 'POST', body: { title, body } }).then((d) => {
+                if (d && d.ok) {
+                    document.getElementById('rt-notify-title').value = '';
+                    document.getElementById('rt-notify-body').value = '';
+                    showAlert("Notifica inviata", "Tutti gli utenti connessi la stanno vedendo adesso.");
+                    showLiveNotify(title, body);
+                    const doSys = document.getElementById('rt-notify-sys') && document.getElementById('rt-notify-sys').checked;
+                    if (doSys) {
+                        requestNotifyPermission().then((ok) => { if (ok) notifySystem(title, body); });
+                    }
+                } else {
+                    showAlert("Errore", "Invio non riuscito.", true);
+                }
+            }).catch(() => showAlert("Errore", "Invio non riuscito.", true));
+        }
+
+        function adminSendProgram() {
+            if (!serverReachableNow()) {
+                showAlert("Server non raggiungibile", "Avvia l'app con 'npm start' per pubblicare la programmazione.", true);
+                return;
+            }
+            const title = document.getElementById('rt-program-title').value.trim() || 'Programmazione Gym House';
+            const body = document.getElementById('rt-program-body').value.trim();
+            if (!body) {
+                showAlert("Programma vuoto", "Scrivi il programma o gli orari da pubblicare.", true);
+                return;
+            }
+            apiFetch('/api/program', { method: 'POST', body: { title, body } }).then((d) => {
+                if (d && d.ok) {
+                    document.getElementById('rt-program-title').value = '';
+                    document.getElementById('rt-program-body').value = '';
+                    showAlert("Programmazione pubblicata", "Tutti gli utenti connessi la stanno vedendo adesso.");
+                    showProgramOverlay(title, body);
+                    const doSys = document.getElementById('rt-notify-sys') && document.getElementById('rt-notify-sys').checked;
+                    if (doSys) {
+                        requestNotifyPermission().then((ok) => { if (ok) notifySystem(title, 'Programmazione appena pubblicata.'); });
+                    }
+                } else {
+                    showAlert("Errore", "Invio non riuscito.", true);
+                }
+            }).catch(() => showAlert("Errore", "Invio non riuscito.", true));
+        }
+
+        function showProgramOverlay(title, body) {
+            const overlay = document.getElementById('program-overlay');
+            if (!overlay) return;
+            document.getElementById('program-overlay-title').textContent = title || 'Programmazione';
+            document.getElementById('program-overlay-body').textContent = body || '';
+            overlay.classList.remove('hidden');
+        }
+        function closeProgramOverlay() {
+            const overlay = document.getElementById('program-overlay');
+            if (overlay) overlay.classList.add('hidden');
+        }
+
+        function adminUploadVideoFile() {
+            if (!serverReachableNow()) {
+                showAlert("Server non raggiungibile", "Avvia l'app con 'npm start' per trasmettere video.", true);
+                return;
+            }
+            const input = document.getElementById('rt-video-file');
+            const file = input && input.files && input.files[0];
+            if (!file) {
+                showAlert("Nessun file", "Scegli un file video da trasmettere.", true);
+                return;
+            }
+            if (file.size > 250 * 1024 * 1024) {
+                showAlert("File troppo grande", "Il video supera i 250 MB.", true);
+                return;
+            }
+            const title = document.getElementById('rt-video-title').value.trim() || file.name.replace(/\.[^.]+$/, '');
+            const fd = new FormData();
+            fd.append('title', title);
+            fd.append('file', file);
+            apiFetch('/api/upload-video', { method: 'POST', body: fd }).then((d) => {
+                if (d && d.ok) {
+                    input.value = '';
+                    document.getElementById('rt-video-title').value = '';
+                    showAlert("Video caricato", "Il file è stato trasmesso a tutti i dispositivi connessi.");
+                    showBroadcastVideo(d.url, d.title);
+                } else {
+                    showAlert("Errore", "Caricamento non riuscito.", true);
+                }
+            }).catch(() => showAlert("Errore", "Caricamento non riuscito.", true));
+        }
+
+        function adminBroadcastVideo() {
+            if (!serverReachableNow()) {
+                showAlert("Server non raggiungibile", "Avvia l'app con 'npm start' per usare il video broadcast.", true);
+                return;
+            }
+            const title = document.getElementById('rt-video-title').value.trim() || 'Video Gym House';
+            let url = document.getElementById('rt-video-url').value.trim();
+            if (!url) {
+                showAlert("URL mancante", "Inserisci l'URL del video.", true);
+                return;
+            }
+            const yt = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([\w-]{6,})/.exec(url);
+            if (yt) url = 'https://www.youtube.com/embed/' + yt[1];
+            apiFetch('/api/broadcast-video', { method: 'POST', body: { url, title } }).then((d) => {
+                if (d && d.ok) {
+                    document.getElementById('rt-video-title').value = '';
+                    document.getElementById('rt-video-url').value = '';
+                    showAlert("Video inviato", "Il video si sta aprendo su tutti i dispositivi connessi.");
+                    showBroadcastVideo(url, title);
+                } else {
+                    showAlert("Errore", "Invio non riuscito.", true);
+                }
+            }).catch(() => showAlert("Errore", "Invio non riuscito.", true));
+        }
+
+        // --- UI: live notify toast ---
+        let liveNotifyTimer = null;
+        function showLiveNotify(title, body) {
+            const el = document.getElementById('live-notify');
+            document.getElementById('live-notify-title').textContent = title || 'Notifica';
+            document.getElementById('live-notify-body').textContent = body || '';
+            el.classList.remove('hidden');
+            clearTimeout(liveNotifyTimer);
+            liveNotifyTimer = setTimeout(closeLiveNotify, 7000);
+        }
+        function closeLiveNotify() {
+            clearTimeout(liveNotifyTimer);
+            document.getElementById('live-notify').classList.add('hidden');
+        }
+
+        // --- UI: broadcast video overlay (non blocca progressi/timer) ---
+        function showBroadcastVideo(url, title) {
+            const overlay = document.getElementById('broadcast-video-overlay');
+            document.getElementById('broadcast-video-title').textContent = title || 'Video Gym House';
+            const frame = document.getElementById('broadcast-video-frame');
+            frame.innerHTML = '';
+            const isYt = /youtube\.com|youtu\.be/.test(url);
+            const ytId = /(?:embed\/|v=)([\w-]{6,})/.exec(url);
+            if (ytId) {
+                frame.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${ytId[1]}?autoplay=1" title="Gym House Broadcast" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            } else if (isYt) {
+                frame.innerHTML = `<iframe class="w-full h-full" src="${esc(url)}" title="Gym House Broadcast" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>`;
+            } else {
+                frame.innerHTML = `<video class="w-full h-full bg-black" src="${esc(url)}" controls autoplay></video>`;
+            }
+            overlay.classList.remove('hidden');
+        }
+        function closeBroadcastVideo() {
+            const frame = document.getElementById('broadcast-video-frame');
+            frame.innerHTML = '';
+            document.getElementById('broadcast-video-overlay').classList.add('hidden');
+        }
+
+        /*
+         * OGGETTO: Nessun reset: il broadcast video e le notifiche NON toccano
+         * localStorage, i check-in effettuati o i dati utente: progressi intatti.
+         */
+
+        function setupPWA() {
+            let deferredPrompt;
+            const pwaBtn = document.getElementById('pwa-install-btn');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                pwaBtn.classList.remove('hidden');
+
+                pwaBtn.addEventListener('click', () => {
+                    pwaBtn.classList.add('hidden');
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+                });
+            });
+
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request)));
+                `;
+                const blob = new Blob([swCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+            }
+        }
+    </script>
+</body>
+</html>
