@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     const passwordHash = crypto.createHash('sha256').update(salt + ':' + newPassword).digest('hex');
 
     await client.query(
-      'UPDATE users SET password_hash = $1, reset_at = NOW() WHERE email = $2',
+      'UPDATE users SET password_hash = $1, reset_at = NOW(), updated_at = NOW() WHERE email = $2',
       [passwordHash, email.toLowerCase()]
     );
 

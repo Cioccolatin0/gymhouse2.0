@@ -1,7 +1,17 @@
 -- Database Schema for Gym House Vercel Deployment
 -- Run this in Vercel Postgres dashboard or via psql
 
+-- ============================
+-- Sync state (for cross-device realtime polling)
+-- ============================
+CREATE TABLE IF NOT EXISTS sync_state (
+  key VARCHAR(50) PRIMARY KEY,
+  updated_at BIGINT NOT NULL
+);
+
+-- ============================
 -- Users table
+-- ============================
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,

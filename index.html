@@ -1681,7 +1681,12 @@
                 apiFetch('/api/sgarro/' + encodeURIComponent(currentUser.email), {
                     method: 'POST',
                     body: { sgarro: sgarroData }
+                }).then((r) => {
+                    lastDataVersion.sgarri = Math.max(lastDataVersion.sgarri, Date.now());
+                    broadcastDataChange('sgarri');
                 }).catch(() => {});
+            } else {
+                broadcastDataChange('sgarri');
             }
         }
 
@@ -1744,7 +1749,12 @@
                 apiFetch('/api/plans/' + encodeURIComponent(currentUser.email), {
                     method: 'POST',
                     body: { kind, data: rec }
+                }).then((r) => {
+                    lastDataVersion.plans = Math.max(lastDataVersion.plans, Date.now());
+                    broadcastDataChange('plans');
                 }).catch(() => {});
+            } else {
+                broadcastDataChange('plans');
             }
         }
 
@@ -2583,6 +2593,8 @@
                 const d = await apiFetch('/api/reset-password', { method: 'POST', body: { email, newPassword: newPass } });
                 if (d && d.ok && Array.isArray(d.users)) {
                     mergeServerUsers(d.users);
+                    lastDataVersion.users = Math.max(lastDataVersion.users, Date.now());
+                    broadcastDataChange('users');
                     showAlert("Password aggiornata", `La password di ${email} è stata reimpostata.`);
                 } else {
                     showAlert("Errore", "Reset non riuscito sul server.", true);
@@ -2590,6 +2602,8 @@
             } else {
                 user.passwordHash = newHash;
                 saveAuth();
+                lastDataVersion.users = Math.max(lastDataVersion.users, Date.now());
+                broadcastDataChange('users');
                 showAlert("Password aggiornata", `Reimpostata solo in locale (server non raggiungibile). Avvia l'app con npm start per la sincronizzazione su tutti i dispositivi.`);
             }
             renderAdminUsers();
@@ -2989,6 +3003,145 @@
         let wsConn = null;
         let wsReconnectTimer = null;
 
+        // --- CROSS-TAB + CROSS-DEVICE SYNC ---
+        const SYNC_SESSION_ID = 'sync_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36);
+        let bcSync = null;
+        try { bcSync = 'BroadcastChannel' in window ? new BroadcastChannel('gymhouse_sync') : null; } catch (e) { bcSync = null; }
+
+        let lastDataVersion = { users: 0, plans: 0, sgarri: 0 };
+        let syncInProgress = false;
+
+        function broadcastDataChange(scope) {
+            const msg = { type: 'data-changed', scope: scope || 'all', sid: SYNC_SESSION_ID, ts: Date.now() };
+            try { if (bcSync) bcSync.postMessage(msg); } catch (e) {}
+            window.dispatchEvent(new CustomEvent('gymhouse-sync', { detail: msg }));
+        }
+
+        async function pullServerUsersAndMerge() {
+            if (!serverOnline) return false;
+            try {
+                const data = await apiFetch('/api/users');
+                if (data && data.ok && Array.isArray(data.users)) {
+                    mergeServerUsers(data.users);
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        async function pullServerPlansForCurrentUser() {
+            if (!serverOnline || !currentUser) return false;
+            try {
+                const data = await apiFetch('/api/plans/' + encodeURIComponent(currentUser.email));
+                if (data && data.ok) {
+                    if (data.diet) {
+                        try {
+                            localStorage.setItem(
+                                planKeyForUser('gymhouse_diet'),
+                                JSON.stringify(typeof data.diet === 'string' ? JSON.parse(data.diet) : data.diet)
+                            );
+                        } catch (e) {}
+                    }
+                    if (data.workout) {
+                        try {
+                            localStorage.setItem(
+                                planKeyForUser('gymhouse_workout'),
+                                JSON.stringify(typeof data.workout === 'string' ? JSON.parse(data.workout) : data.workout)
+                            );
+                        } catch (e) {}
+                    }
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        async function pullServerSgarriForCurrentUser() {
+            if (!serverOnline || !currentUser) return false;
+            try {
+                const data = await apiFetch('/api/sgarro/' + encodeURIComponent(currentUser.email));
+                if (data && data.ok && Array.isArray(data.sgarri)) {
+                    try {
+                        localStorage.setItem(sgarroKeyForUser(), JSON.stringify(data.sgarri));
+                    } catch (e) {}
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        }
+
+        async function refreshAllRemoteState(opts) {
+            if (syncInProgress) return;
+            syncInProgress = true;
+            try {
+                const options = opts || {};
+                const scope = options.scope || 'all';
+                const results = [];
+
+                if (scope === 'all' || scope === 'users') {
+                    results.push(pullServerUsersAndMerge());
+                }
+                if (scope === 'all' || scope === 'plans') {
+                    results.push(pullServerPlansForCurrentUser());
+                }
+                if (scope === 'all' || scope === 'sgarri') {
+                    results.push(pullServerSgarriForCurrentUser());
+                }
+
+                await Promise.all(results);
+
+                // --- Refresh UI after remote state updated ---
+                try { renderProfileList(); } catch (e) {}
+                try { renderHeaderUserChip(); } catch (e) {}
+                try {
+                    if (typeof currentTab !== 'undefined') {
+                        if (currentTab === 'plans') loadPlansTab();
+                        if (currentTab === 'diet') {
+                            loadSgarroHistory();
+                        }
+                        updateSgarroCount();
+                        if (currentTab === 'profile' && window.loadProfileTab) loadProfileTab();
+                    } else {
+                        updateSgarroCount();
+                    }
+                } catch (e) {}
+                try { if (window.renderAdminUsers) renderAdminUsers(); } catch (e) {}
+            } finally {
+                syncInProgress = false;
+            }
+        }
+
+        function setupSyncListeners() {
+            // Listen to BroadcastChannel messages from other tabs
+            if (bcSync) {
+                bcSync.onmessage = (ev) => {
+                    const msg = ev.data || {};
+                    if (msg.type === 'data-changed' && msg.sid !== SYNC_SESSION_ID) {
+                        refreshAllRemoteState({ scope: msg.scope });
+                    }
+                };
+            }
+            // In-Browser (same tab) custom events
+            window.addEventListener('gymhouse-sync', (ev) => {
+                const msg = (ev && ev.detail) || {};
+                if (msg.type === 'data-changed' && msg.sid !== SYNC_SESSION_ID) {
+                    refreshAllRemoteState({ scope: msg.scope });
+                }
+            });
+            // Fallback storage event for browsers without BroadcastChannel
+            window.addEventListener('storage', (ev) => {
+                if (ev && ev.key && (ev.key.indexOf('gymhouse_') === 0 || ev.key.indexOf('auth_') === 0)) {
+                    if (currentUser) {
+                        refreshAllRemoteState({ scope: 'all' });
+                    } else {
+                        try { if (window.loadAuth) loadAuth(); } catch (e) {}
+                        try { renderProfileList(); } catch (e) {}
+                    }
+                }
+            });
+        }
+        // --- END CROSS-TAB + CROSS-DEVICE SYNC ---
+
         function serverReachableNow() {
             return serverOnline;
         }
@@ -3004,6 +3157,7 @@
         }
 
         function initRealtime() {
+            setupSyncListeners();
             apiFetch('/api/users').then((data) => {
                 if (data && data.ok && Array.isArray(data.users)) {
                     serverOnline = true;
@@ -3011,6 +3165,7 @@
                     connectWebSocket();
                     openAdminRealtime();
                     loadServerKeys();
+                    // Initialize lastDataVersion after connect
                 }
             }).catch(() => {});
         }
@@ -3059,6 +3214,8 @@
             if (!serverReachableNow()) return;
             apiFetch('/api/users/sync', { method: 'POST', body: { users: authUsers } }).then((data) => {
                 if (data && data.ok && Array.isArray(data.users)) mergeServerUsers(data.users);
+                lastDataVersion.users = Math.max(lastDataVersion.users, Date.now());
+                broadcastDataChange('users');
             }).catch(() => {});
         }
 
@@ -3090,6 +3247,7 @@
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             pollingInterval = setInterval(checkForUpdates, 5000); // Check every 5 seconds
+            checkForUpdates(); // immediately capture dataVersion baselines
         }
 
         function stopPolling() {
@@ -3101,7 +3259,7 @@
 
         async function checkForUpdates() {
             try {
-                // Check for new notifications/videos/programs
+                // Check for new notifications/videos/programs + data version changes
                 const response = await fetch('/api/updates');
                 if (response.ok) {
                     const data = await response.json();
@@ -3121,6 +3279,30 @@
                         showProgramOverlay(data.lastProgram.title, data.lastProgram.body);
                         notifySystem(data.lastProgram.title, data.lastProgram.body);
                         lastProgramCheck = data.lastProgram.date;
+                    }
+
+                    // --- CROSS-DEVICE: detect data changed on another device via timestamps ---
+                    if (data.dataVersion && typeof data.dataVersion === 'object') {
+                        const dv = data.dataVersion;
+                        let scopeChanged = null;
+                        if (lastDataVersion.users > 0 && dv.users > lastDataVersion.users) {
+                            scopeChanged = scopeChanged ? 'all' : 'users';
+                        }
+                        if (lastDataVersion.plans > 0 && dv.plans > lastDataVersion.plans) {
+                            scopeChanged = scopeChanged === 'users' ? 'all' : (scopeChanged || 'plans');
+                        }
+                        if (lastDataVersion.sgarri > 0 && dv.sgarri > lastDataVersion.sgarri) {
+                            scopeChanged = 'all';
+                        }
+
+                        if (scopeChanged) {
+                            refreshAllRemoteState({ scope: scopeChanged });
+                        }
+
+                        // Always update last known timestamps
+                        if (dv.users) lastDataVersion.users = dv.users;
+                        if (dv.plans) lastDataVersion.plans = dv.plans;
+                        if (dv.sgarri) lastDataVersion.sgarri = dv.sgarri;
                     }
                 }
             } catch (e) {

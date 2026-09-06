@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     }
 
     // Get existing users
-    const { rows: existingUsers } = await client.query('SELECT email, password_hash, configured FROM users');
+    const { rows: existingUsers } = await client.query('SELECT email, name, emoji, color_index, password_hash, configured FROM users');
     const byEmail = new Map();
     existingUsers.forEach(u => byEmail.set(u.email, u));
 
@@ -44,18 +44,39 @@ export default async function handler(req, res) {
         const passwordHash = u.passwordHash || crypto.createHash('sha256').update(salt + ':' + (u.password || 'default')).digest('hex');
         
         await client.query(
-          'INSERT INTO users (email, name, password_hash, emoji, color_index, configured, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-          [u.email.toLowerCase(), u.name || 'User', passwordHash, u.emoji || '💪', u.colorIndex || 0, u.configured || false]
+          'INSERT INTO users (email, name, password_hash, emoji, color_index, configured, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())',
+          [u.email.toLowerCase(), u.name || 'User', passwordHash, u.emoji || '💪', u.colorIndex ?? 0, u.configured || false]
         );
         changed = true;
-      } else if (u.passwordHash && u.passwordHash !== existing.password_hash) {
-        // Update password
-        await client.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE email = $2', [u.passwordHash, u.email]);
-        changed = true;
-      } else if ((u.configured || false) && !existing.configured) {
-        // Update configured status
-        await client.query('UPDATE users SET configured = true, updated_at = NOW() WHERE email = $1', [u.email]);
-        changed = true;
+      } else {
+        // Update existing user: check all mutable fields and force updated_at=NOW() if anything changed
+        let needsUpdate = false;
+        const newName = (u.name || 'User').slice(0, 100);
+        const newEmoji = (u.emoji || '💪').slice(0, 10);
+        const newColor = u.colorIndex ?? 0;
+        const newConfigured = u.configured ? true : false;
+        const newPass = u.passwordHash || null;
+
+        if (newName !== existing.name) needsUpdate = true;
+        if (newEmoji !== existing.emoji) needsUpdate = true;
+        if (Number(newColor) !== Number(existing.color_index)) needsUpdate = true;
+        if (newConfigured !== (existing.configured ? true : false)) needsUpdate = true;
+        if (newPass && newPass !== existing.password_hash) needsUpdate = true;
+
+        if (needsUpdate) {
+          if (newPass) {
+            await client.query(
+              'UPDATE users SET name=$1, emoji=$2, color_index=$3, configured=$4, password_hash=$5, updated_at=NOW() WHERE email=$6',
+              [newName, newEmoji, newColor, newConfigured, newPass, u.email.toLowerCase()]
+            );
+          } else {
+            await client.query(
+              'UPDATE users SET name=$1, emoji=$2, color_index=$3, configured=$4, updated_at=NOW() WHERE email=$5',
+              [newName, newEmoji, newColor, newConfigured, u.email.toLowerCase()]
+            );
+          }
+          changed = true;
+        }
       }
     }
 

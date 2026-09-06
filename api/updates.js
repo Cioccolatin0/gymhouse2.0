@@ -33,11 +33,28 @@ export default async function handler(req, res) {
       'SELECT title, body, date FROM programs ORDER BY date DESC LIMIT 1'
     );
 
+    // Cross-device data change detection: return MAX timestamps for users/plans/sgarri
+    // so frontend knows if it needs to refetch lists from another device
+    const { rows: maxUsersRows } = await client.query(
+      "SELECT COALESCE(EXTRACT(EPOCH FROM MAX(updated_at)) * 1000, 0) AS ts FROM users"
+    );
+    const { rows: maxPlansRows } = await client.query(
+      "SELECT COALESCE(EXTRACT(EPOCH FROM MAX(created_at)) * 1000, 0) AS ts FROM plans"
+    );
+    const { rows: maxSgarriRows } = await client.query(
+      'SELECT COALESCE(MAX(timestamp), 0) AS ts FROM sgarri'
+    );
+
     return res.status(200).json({
       ok: true,
       lastNotify: notifies[0] || null,
       lastVideo: videos[0] || null,
-      lastProgram: programs[0] || null
+      lastProgram: programs[0] || null,
+      dataVersion: {
+        users: Math.floor(maxUsersRows[0]?.ts || 0),
+        plans: Math.floor(maxPlansRows[0]?.ts || 0),
+        sgarri: Math.floor(maxSgarriRows[0]?.ts || 0)
+      }
     });
   } catch (error) {
     console.error('Updates API error:', error);
