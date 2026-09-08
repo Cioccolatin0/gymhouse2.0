@@ -19,9 +19,21 @@ export default async function handler(req, res) {
   
   try {
     if (req.method === 'GET') {
-      // Get all users
-      const { rows } = await client.query('SELECT email, name, emoji, color_index, configured, created_at FROM users ORDER BY created_at DESC');
-      return res.status(200).json({ ok: true, users: rows });
+      // Get all users (include password_hash + credential so login works on new devices)
+      const { rows } = await client.query('SELECT email, name, emoji, color_index, configured, credential, password_hash, created_at FROM users ORDER BY created_at DESC');
+      const normalized = rows.map(r => ({
+        email: r.email,
+        name: r.name,
+        emoji: r.emoji,
+        colorIndex: r.color_index,
+        color_index: r.color_index,
+        configured: r.configured,
+        credential: r.credential,
+        passwordHash: r.password_hash,
+        password_hash: r.password_hash,
+        created_at: r.created_at
+      }));
+      return res.status(200).json({ ok: true, users: normalized });
     }
 
     if (req.method === 'POST') {

@@ -3365,23 +3365,27 @@
             authUsers.forEach(u => byEmail.set(u.email, u));
             (serverUsers || []).forEach(su => {
                 if (!su || !su.email) return;
+                const suPass = su.passwordHash || su.password_hash || null;
+                const suColor = (typeof su.colorIndex === 'number') ? su.colorIndex : (typeof su.color_index === 'number' ? su.color_index : 0);
+                const suCred = su.credential || null;
                 const local = byEmail.get(su.email);
                 if (!local) {
                     byEmail.set(su.email, {
                         email: su.email,
                         name: su.name || '',
-                        passwordHash: su.passwordHash || null,
+                        passwordHash: suPass,
                         emoji: su.emoji || '💪',
-                        colorIndex: typeof su.colorIndex === 'number' ? su.colorIndex : 0,
-                        credential: su.credential || null,
+                        colorIndex: suColor,
+                        credential: suCred,
                         configured: !!su.configured
                     });
                 } else {
-                    if (su.passwordHash && su.passwordHash !== local.passwordHash) local.passwordHash = su.passwordHash;
+                    if (suPass && suPass !== local.passwordHash) local.passwordHash = suPass;
                     if (!local.configured && su.configured) local.configured = true;
                     if (su.name) local.name = su.name;
                     if (su.emoji) local.emoji = su.emoji;
-                    if (typeof su.colorIndex === 'number') local.colorIndex = su.colorIndex;
+                    if (typeof suColor === 'number') local.colorIndex = suColor;
+                    if (suCred && !local.credential) local.credential = suCred;
                 }
             });
             authUsers = Array.from(byEmail.values());
