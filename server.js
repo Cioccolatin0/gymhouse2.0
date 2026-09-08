@@ -4,10 +4,94 @@ const path = require('path');
 const crypto = require('crypto');
 const { WebSocketServer, WebSocket } = require('ws');
 
+let Pool = null;
+try { ({ Pool } = require('@neondatabase/serverless')); } catch (e) { Pool = null; }
+
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const START_PORT = parseInt(process.env.PORT, 10) || 3000;
+
+// ----- Neon Postgres (cross-device persistent storage) -----
+// Su Vercel server.js è il server deployato: usa Postgres invece del JSON effimero.
+const PG_CS = process.env.POSTGRES_URL || process.env.DATABASE_URL || '';
+const usePg = !!(PG_CS && Pool);
+let _pool = null;
+function getPool() {
+  if (!_pool) _pool = new Pool({ connectionString: PG_CS });
+  return _pool;
+}
+
+const INIT_SQL = `
+CREATE TABLE IF NOT EXISTS sync_state (
+  key VARCHAR(50) PRIMARY KEY,
+  updated_at BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  emoji VARCHAR(10) DEFAULT '💪',
+  color_index INTEGER DEFAULT 0,
+  configured BOOLEAN DEFAULT FALSE,
+  credential TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  reset_at TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS plans (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  kind VARCHAR(20) NOT NULL CHECK (kind IN ('diet', 'workout')),
+  data JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(email, kind)
+);
+CREATE TABLE IF NOT EXISTS sgarri (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  food TEXT NOT NULL,
+  quantity TEXT,
+  time VARCHAR(10),
+  date VARCHAR(20),
+  timestamp BIGINT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS notifications (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  body TEXT,
+  date BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS videos (
+  id SERIAL PRIMARY KEY,
+  url TEXT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  date BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS programs (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  body TEXT,
+  date BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS running_sessions (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  distance_km DECIMAL(5,2) DEFAULT 0,
+  duration_sec INTEGER DEFAULT 0,
+  polyline TEXT,
+  calories INTEGER DEFAULT 0,
+  date BIGINT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_plans_email ON plans(email);
+CREATE INDEX IF NOT EXISTS idx_sgarri_email ON sgarri(email);
+CREATE INDEX IF NOT EXISTS idx_videos_date ON videos(date DESC);
+CREATE INDEX IF NOT EXISTS idx_programs_date ON programs(date DESC);
+`;
 
 const ADMIN_EMAIL = 'emobtemo@gmail.com';
 const GEMINI_MODEL = 'gemini-3-flash-preview';
@@ -38,21 +122,186 @@ const MIME = {
 const UPLOAD_DIR = path.join(ROOT, 'uploads');
 const VIDEO_EXT = ['.mp4', '.webm', '.mov', '.m4v', '.ogg', '.m3u8'];
 
-// ---------- DB (file JSON) ----------
-function loadDb() {
+// ---------- DB (file JSON o Neon Postgres) ----------
+function emptyDb() {
+  return { users: [], lastNotify: null, lastVideo: null, lastProgram: null, keys: { gemini: '', youtube: '', setAt: null }, plans: {}, sgarri: {}, allVideos: [], runningSessions: [], lastUserVersion: 0, lastPlanVersion: 0, lastSgarroVersion: 0 };
+}
+
+function normalizeUserRow(r) {
+  return {
+    email: r.email,
+    name: r.name,
+    passwordHash: r.password_hash,
+    emoji: r.emoji || '💪',
+    colorIndex: typeof r.color_index === 'number' ? r.color_index : Number(r.color_index) || 0,
+    credential: r.credential || null,
+    configured: !!r.configured,
+    createdAt: r.created_at ? Date.parse(r.created_at) : Date.now(),
+    resetAt: r.reset_at ? Date.parse(r.reset_at) : null
+  };
+}
+
+async function loadDb() {
+  if (usePg) {
+    try {
+      const client = await getPool().connect();
+      try {
+        await client.query(INIT_SQL);
+        const db = emptyDb();
+        const users = await client.query('SELECT email, name, password_hash, emoji, color_index, configured, credential, created_at, reset_at FROM users');
+        db.users = users.rows.map(normalizeUserRow);
+
+        // Keys da env vars (fallback: sync_state)
+        db.keys = {
+          gemini: process.env.GEMINI_API_KEY || '',
+          youtube: process.env.YOUTUBE_API_KEY || '',
+          setAt: process.env.KEYS_SET_AT || (Date.now())
+        };
+
+        // Plans
+        const plans = await client.query('SELECT email, kind, data FROM plans');
+        plans.rows.forEach(p => {
+          db.plans[p.email] = db.plans[p.email] || {};
+          let val = p.data;
+          if (typeof val === 'string') { try { val = JSON.parse(val); } catch (e) {} }
+          db.plans[p.email][p.kind] = val;
+        });
+
+        // Sgarri
+        const sgarri = await client.query('SELECT email, food, quantity, time, date, timestamp FROM sgarri ORDER BY created_at DESC LIMIT 300');
+        sgarri.rows.forEach(s => {
+          db.sgarri[s.email] = db.sgarri[s.email] || [];
+          db.sgarri[s.email].push({ food: s.food, quantity: s.quantity, time: s.time, date: s.date, timestamp: s.timestamp });
+        });
+
+        // Last notify / video / program dalla tabella notifiche/videos/programs
+        const lastNotify = await client.query('SELECT title, body, date FROM notifications ORDER BY date DESC LIMIT 1');
+        if (lastNotify.rows[0]) db.lastNotify = { title: lastNotify.rows[0].title, body: lastNotify.rows[0].body, date: lastNotify.rows[0].date };
+        const lastVideo = await client.query('SELECT url, title, date FROM videos ORDER BY date DESC LIMIT 1');
+        if (lastVideo.rows[0]) db.lastVideo = { url: lastVideo.rows[0].url, title: lastVideo.rows[0].title, date: lastVideo.rows[0].date };
+        const lastProgram = await client.query('SELECT title, body, date FROM programs ORDER BY date DESC LIMIT 1');
+        if (lastProgram.rows[0]) db.lastProgram = { title: lastProgram.rows[0].title, body: lastProgram.rows[0].body, date: lastProgram.rows[0].date };
+
+        // ALL videos (per la scheda)
+        const allVideos = await client.query('SELECT id, url, title, date FROM videos ORDER BY date ASC');
+        db.allVideos = allVideos.rows.map(v => ({ id: v.id, url: v.url, title: v.title, date: v.date }));
+
+        // Running sessions
+        const running = await client.query('SELECT id, email, distance_km, duration_sec, calories, polyline, date, created_at FROM running_sessions ORDER BY created_at DESC LIMIT 20');
+        db.runningSessions = running.rows.map(r => ({
+          id: r.id, email: r.email,
+          distance_km: Number(r.distance_km) || 0,
+          duration_sec: r.duration_sec || 0,
+          calories: r.calories || 0,
+          polyline: r.polyline,
+          date: r.date
+        }));
+
+        return db;
+      } finally { client.release(); }
+    } catch (e) {
+      console.error('PG loadDb error:', e.message);
+      return loadDbJson();
+    }
+  }
+  return loadDbJson();
+}
+
+function loadDbJson() {
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-    if (!fs.existsSync(DB_FILE)) return { users: [], lastNotify: null, lastVideo: null, lastProgram: null, keys: { gemini: '', youtube: '', setAt: null }, plans: {}, sgarri: {} };
+    if (!fs.existsSync(DB_FILE)) return emptyDb();
     const raw = fs.readFileSync(DB_FILE, 'utf8');
     const db = JSON.parse(raw);
     db.users = Array.isArray(db.users) ? db.users : [];
     return db;
   } catch (e) {
-    return { users: [], lastNotify: null, lastVideo: null, lastProgram: null, keys: { gemini: '', youtube: '', setAt: null }, plans: {}, sgarri: {} };
+    return emptyDb();
   }
 }
 
-function saveDb(db) {
+async function saveDb(db) {
+  if (usePg) {
+    try {
+      const client = await getPool().connect();
+      try {
+        // Users upsert
+        for (const u of db.users || []) {
+          if (!u || !u.email) continue;
+          const salt = String(u.email).toLowerCase().trim();
+          const hash = u.passwordHash || crypto.createHash('sha256').update(salt + ':' + 'default').digest('hex');
+          await client.query(
+            `INSERT INTO users (email, name, password_hash, emoji, color_index, configured, credential, created_at, updated_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE((SELECT created_at FROM users WHERE email=$1), NOW()), NOW())
+             ON CONFLICT (email) DO UPDATE SET
+               name=EXCLUDED.name, password_hash=EXCLUDED.password_hash, emoji=EXCLUDED.emoji,
+               color_index=EXCLUDED.color_index, configured=EXCLUDED.configured,
+               credential=EXCLUDED.credential, updated_at=NOW()`,
+            [String(u.email).toLowerCase(), (u.name || 'User').slice(0,100), hash, (u.emoji || '💪').slice(0,10), u.colorIndex ?? 0, !!u.configured, u.credential || null]
+          );
+        }
+        // Plans
+        for (const email of Object.keys(db.plans || {})) {
+          for (const kind of ['diet', 'workout']) {
+            const val = db.plans[email][kind];
+            if (val == null) continue;
+            await client.query(
+              `INSERT INTO plans (email, kind, data) VALUES ($1,$2,$3::jsonb)
+               ON CONFLICT (email, kind) DO UPDATE SET data=EXCLUDED.data`,
+              [email.toLowerCase(), kind, typeof val === 'string' ? val : JSON.stringify(val)]
+            );
+          }
+        }
+        // Sgarri (sostituisci per email: elimina e reinserisci)
+        for (const email of Object.keys(db.sgarri || {})) {
+          const list = db.sgarri[email] || [];
+          await client.query('DELETE FROM sgarri WHERE email=$1', [email.toLowerCase()]);
+          for (const s of list) {
+            await client.query(
+              'INSERT INTO sgarri (email, food, quantity, time, date, timestamp) VALUES ($1,$2,$3,$4,$5,$6)',
+              [email.toLowerCase(), String(s.food || '').slice(0,500), s.quantity || null, s.time || null, s.date || null, s.timestamp ? Number(s.timestamp) : Date.now()]
+            );
+          }
+        }
+        // Notifiche / video / program (upsert del più recente)
+        if (db.lastNotify) {
+          await client.query('DELETE FROM notifications');
+          await client.query('INSERT INTO notifications (title, body, date) VALUES ($1,$2,$3)', [db.lastNotify.title, db.lastNotify.body, Date.now()]);
+        }
+        // Video: salva lista completa + ultimo
+        await client.query('DELETE FROM videos');
+        const videoSet = new Map();
+        (db.allVideos || []).forEach(v => { if (v && v.url) videoSet.set(v.url, v); });
+        if (db.lastVideo && db.lastVideo.url) videoSet.set(db.lastVideo.url, db.lastVideo);
+        for (const v of videoSet.values()) {
+          await client.query(
+            'INSERT INTO videos (url, title, date) VALUES ($1,$2,$3)',
+            [v.url, String(v.title || 'Video').slice(0,200), Number(v.date) || Date.now()]
+          );
+        }
+        if (db.lastProgram) {
+          await client.query('DELETE FROM programs');
+          await client.query('INSERT INTO programs (title, body, date) VALUES ($1,$2,$3)', [db.lastProgram.title, db.lastProgram.body, Date.now()]);
+        }
+        // Running sessions (lista completa autoritativa)
+        if (Array.isArray(db.runningSessions)) {
+          await client.query('DELETE FROM running_sessions');
+          for (const s of db.runningSessions) {
+            if (!s || !s.email) continue;
+            await client.query(
+              `INSERT INTO running_sessions (email, distance_km, duration_sec, calories, polyline, date)
+               VALUES ($1,$2,$3,$4,$5,$6)`,
+              [s.email.toLowerCase(), Number(s.distance_km) || 0, Number(s.duration_sec) || 0, Number(s.calories) || 0, s.polyline || null, Number(s.date) || Date.now()]
+            );
+          }
+          db.lastRunningSync = Date.now();
+        }
+      } finally { client.release(); }
+    } catch (e) {
+      console.error('PG saveDb error:', e.message);
+    }
+    return;
+  }
   try {
     if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
@@ -85,13 +334,25 @@ function broadcast(obj) {
   });
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, 'http://localhost:' + (server.address() ? server.address().port : START_PORT));
   const urlPath = decodeURIComponent(parsedUrl.pathname);
 
   // ---------- API ----------
   if (urlPath.startsWith('/api/')) {
-    const db = loadDb();
+    let db;
+    try {
+      db = await loadDb();
+    } catch (e) {
+      writeJson(res, 500, { ok: false, message: 'Errore database: ' + e.message });
+      return;
+    }
+
+    // Inizializzazione schema (idempotente) - setup automatico Neon
+    if (urlPath === '/api/init') {
+      writeJson(res, 200, { ok: true, message: 'Database inizializzato (' + (usePg ? 'Neon Postgres' : 'JSON locale') + ').' });
+      return;
+    }
 
     // Chiavi centrali (solo admin)
     if (urlPath === '/api/keys' && req.method === 'GET') {
@@ -195,6 +456,7 @@ const server = http.createServer((req, res) => {
           const kind = String(body.kind || '');
           if (kind !== 'diet' && kind !== 'workout') { writeJson(res, 400, { ok: false, message: 'kind non valido.' }); return; }
           db.plans[email][kind] = body.data || null;
+          db.lastPlanVersion = Date.now();
           saveDb(db);
           writeJson(res, 200, { ok: true });
         });
@@ -218,6 +480,7 @@ const server = http.createServer((req, res) => {
           db.sgarri[email].unshift(sgarro);
           // Keep only last 30
           if (db.sgarri[email].length > 30) db.sgarri[email] = db.sgarri[email].slice(0, 30);
+          db.lastSgarroVersion = Date.now();
           saveDb(db);
           writeJson(res, 200, { ok: true });
         });
@@ -230,7 +493,7 @@ const server = http.createServer((req, res) => {
       return;
     }
     if (urlPath === '/api/users/sync' && req.method === 'POST') {
-      readBody(req, (body) => {
+      readBody(req, async (body) => {
         const incoming = (body && Array.isArray(body.users)) ? body.users : [];
         const byEmail = new Map();
         db.users.forEach(u => byEmail.set(u.email, u));
@@ -245,6 +508,7 @@ const server = http.createServer((req, res) => {
             if (u.emoji && u.emoji !== existing.emoji) { updates.emoji = u.emoji; changed = true; }
             if (u.colorIndex !== undefined && u.colorIndex !== existing.colorIndex) { updates.colorIndex = u.colorIndex; changed = true; }
             if (u.passwordHash && u.passwordHash !== existing.passwordHash) { updates.passwordHash = u.passwordHash; changed = true; }
+            if (u.credential && u.credential !== existing.credential) { updates.credential = u.credential; changed = true; }
             if (u.configured === true && existing.configured !== true) { updates.configured = true; changed = true; }
             if (Object.keys(updates).length > 0) {
               const newExisting = { ...existing, ...updates, created: existing.created };
@@ -252,7 +516,11 @@ const server = http.createServer((req, res) => {
             }
           }
         });
-        if (changed) { db.users = Array.from(byEmail.values()); saveDb(db); }
+        if (changed) {
+          db.users = Array.from(byEmail.values());
+          db.lastUserVersion = Date.now();
+          await saveDb(db);
+        }
         writeJson(res, 200, { ok: true, users: db.users, lastNotify: db.lastNotify, lastVideo: db.lastVideo, lastProgram: db.lastProgram });
       });
       return;
@@ -269,7 +537,7 @@ const server = http.createServer((req, res) => {
       return;
     }
     if (urlPath === '/api/reset-password' && req.method === 'POST') {
-      readBody(req, (body) => {
+      readBody(req, async (body) => {
         const email = String(body.email || '').toLowerCase().trim();
         const pass = String(body.newPassword || '');
         if (pass.length < 4) { writeJson(res, 400, { ok: false, message: 'Password troppo corta (min 4 caratteri).' }); return; }
@@ -277,7 +545,7 @@ const server = http.createServer((req, res) => {
         if (!user) { writeJson(res, 404, { ok: false, message: 'Utente non trovato.' }); return; }
         user.passwordHash = hashPassword(pass, email);
         user.resetAt = Date.now();
-        saveDb(db);
+        await saveDb(db);
         writeJson(res, 200, { ok: true, users: db.users });
       });
       return;
@@ -318,12 +586,74 @@ const server = http.createServer((req, res) => {
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
         const title = String(body.title || 'Video Gym House').slice(0, 120);
         db.lastVideo = { url, title, date: Date.now() };
+        db.allVideos = db.allVideos || [];
+        if (!db.allVideos.some(v => v.url === url)) db.allVideos.push({ id: Date.now(), url, title, date: Date.now() });
         saveDb(db);
         broadcast({ type: 'video', url, title });
         writeJson(res, 200, { ok: true });
       });
       return;
     }
+
+    // Polling updates (Vercel-compatible, senza WebSocket)
+    if (urlPath === '/api/updates') {
+      writeJson(res, 200, {
+        ok: true,
+        lastNotify: db.lastNotify || null,
+        lastVideo: db.lastVideo || null,
+        lastProgram: db.lastProgram || null,
+        allVideos: db.allVideos || [],
+        running_sessions: db.runningSessions || [],
+        dataVersion: {
+          users: db.lastUserVersion || 0,
+          plans: db.lastPlanVersion || 0,
+          sgarri: db.lastSgarroVersion || 0
+        }
+      });
+      return;
+    }
+
+    // Running sessions (Strava-like)
+    if (urlPath.indexOf('/api/running/') === 0) {
+      const email = decodeURIComponent(urlPath.slice('/api/running/'.length)).toLowerCase().trim();
+      if (req.method === 'GET') {
+        const mine = (db.runningSessions || []).filter(s => s.email === email);
+        writeJson(res, 200, { ok: true, running_sessions: mine });
+        return;
+      }
+      if (req.method === 'POST') {
+        readBody(req, (body) => {
+          const session = {
+            email: email,
+            distance_km: Number(body.distance_km) || 0,
+            duration_sec: Number(body.duration_sec) || 0,
+            calories: Number(body.calories) || 0,
+            polyline: body.polyline || null,
+            date: Date.now()
+          };
+          db.runningSessions = db.runningSessions || [];
+          db.runningSessions.unshift(session);
+          saveDb(db);
+          writeJson(res, 200, { ok: true });
+        });
+        return;
+      }
+      if (req.method === 'DELETE') {
+        readBody(req, async (body) => {
+          const id = Number(body.id);
+          db.runningSessions = (db.runningSessions || []).filter(s => s.id !== id);
+          if (usePg) {
+            try {
+              const client = await getPool().connect();
+              try { await client.query('DELETE FROM running_sessions WHERE id=$1', [id]); } finally { client.release(); }
+            } catch (e) {}
+          }
+          writeJson(res, 200, { ok: true });
+        });
+        return;
+      }
+    }
+
     writeJson(res, 404, { ok: false, message: 'API non trovata: ' + urlPath });
     return;
   }
