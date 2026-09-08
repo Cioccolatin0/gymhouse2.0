@@ -239,10 +239,17 @@ const server = http.createServer((req, res) => {
           if (!u || !u.email) return;
           const existing = byEmail.get(u.email);
           if (!existing) { byEmail.set(u.email, { created: Date.now(), ...u }); changed = true; }
-          else if (u.passwordHash && u.passwordHash !== existing.passwordHash) {
-            byEmail.set(u.email, { ...existing, passwordHash: u.passwordHash, updated: Date.now() }); changed = true;
-          } else if ((u.configured || false) && existing.configured !== true) {
-            byEmail.set(u.email, { ...existing, ...u, created: existing.created }); changed = true;
+          else {
+            const updates = {};
+            if (u.name && u.name !== existing.name) { updates.name = u.name; changed = true; }
+            if (u.emoji && u.emoji !== existing.emoji) { updates.emoji = u.emoji; changed = true; }
+            if (u.colorIndex !== undefined && u.colorIndex !== existing.colorIndex) { updates.colorIndex = u.colorIndex; changed = true; }
+            if (u.passwordHash && u.passwordHash !== existing.passwordHash) { updates.passwordHash = u.passwordHash; changed = true; }
+            if (u.configured === true && existing.configured !== true) { updates.configured = true; changed = true; }
+            if (Object.keys(updates).length > 0) {
+              const newExisting = { ...existing, ...updates, created: existing.created };
+              byEmail.set(u.email, newExisting);
+            }
           }
         });
         if (changed) { db.users = Array.from(byEmail.values()); saveDb(db); }

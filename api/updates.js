@@ -25,12 +25,22 @@ export default async function handler(req, res) {
       'SELECT title, body, date FROM notifications ORDER BY date DESC LIMIT 1'
     );
     
+    // Get ALL videos (not just the last one)
+    const { rows: allVideos } = await client.query(
+      'SELECT url, title, date FROM videos ORDER BY date ASC'
+    );
+    
     const { rows: videos } = await client.query(
       'SELECT url, title, date FROM videos ORDER BY date DESC LIMIT 1'
     );
     
     const { rows: programs } = await client.query(
       'SELECT title, body, date FROM programs ORDER BY date DESC LIMIT 1'
+    );
+    
+    // Get running sessions for data versioning
+    const { rows: runningSessions } = await client.query(
+      'SELECT id, distance_km, duration_sec, calories, date, polyline, created_at FROM running_sessions ORDER BY created_at DESC LIMIT 5'
     );
 
     // Cross-device data change detection: return MAX timestamps for users/plans/sgarri
@@ -50,6 +60,8 @@ export default async function handler(req, res) {
       lastNotify: notifies[0] || null,
       lastVideo: videos[0] || null,
       lastProgram: programs[0] || null,
+      allVideos: allVideos || [],
+      running_sessions: runningSessions || [],
       dataVersion: {
         users: Math.floor(maxUsersRows[0]?.ts || 0),
         plans: Math.floor(maxPlansRows[0]?.ts || 0),

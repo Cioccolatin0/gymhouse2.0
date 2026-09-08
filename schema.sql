@@ -79,3 +79,15 @@ CREATE INDEX IF NOT EXISTS idx_sgarri_timestamp ON sgarri(timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_date ON notifications(date DESC);
 CREATE INDEX IF NOT EXISTS idx_videos_date ON videos(date DESC);
 CREATE INDEX IF NOT EXISTS idx_programs_date ON programs(date DESC);
+
+-- Running sessions table
+CREATE TABLE IF NOT EXISTS running_sessions (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  distance_km DECIMAL(5,2) DEFAULT 0,
+  duration_sec INTEGER DEFAULT 0,
+  polyline TEXT,  -- GPS route encoded
+  calories INTEGER DEFAULT 0,
+  date BIGINT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

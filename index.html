@@ -463,6 +463,83 @@
                     </div>
                     <div id="workout-content" class="text-sm space-y-3 leading-relaxed text-zinc-800 dark:text-zinc-200"></div>
                 </div>
+                
+                <!-- Video Schedule Section -->
+                <div id="video-schedule-container" class="glass-panel rounded-3xl p-5 space-y-4 hidden">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i data-lucide="video" class="w-4 h-4 text-indigo-500"></i> Video Integrati nella Scheda
+                    </h3>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">Video disponibili per gli esercizi della scheda corrente</p>
+                    <div id="video-schedule-list" class="space-y-2 max-h-80 overflow-y-auto"></div>
+                </div>
+                
+                <!-- Running Tracker Section -->
+                <div id="running-tracker-container" class="glass-panel rounded-3xl p-5 space-y-4 hidden">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i data-lucide="gauge" class="w-4 h-4 text-emerald-500"></i> Traccia la tua Corsa
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">KM Percorsi</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span id="running-distance" class="font-bold text-2xl text-emerald-600">0.0</span>
+                                <span class="text-[10px] text-zinc-500">km</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Durata</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span id="running-duration" class="font-bold"></span>
+                                <span class="text-[10px] text-zinc-500">min</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Calorie</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span id="running-calories" class="font-bold"></span>
+                            </div>
+                        </div>
+                        <button onclick="startRunningTracking()" id="start-running-btn" class="w-full py-2.5 rounded-xl glass-button text-white font-bold text-sm shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2">
+                            <i data-lucide="record" class="w-4 h-4"></i> Avvia Tracciamento
+                        </button>
+                        <button onclick="stopRunningTracking()" id="stop-running-btn" class="w-full py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-500 hover:bg-emerald-500/10 font-bold text-sm flex items-center justify-center gap-2 hidden">
+                            <i data-lucide="stop" class="w-4 h-4"></i> Ferma Tracciamento
+                        </button>
+                    </div>
+                    <div id="running-map" class="my-4 h-48 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+                        <svg class="w-full h-full" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="40" fill="var(--bg-color, #e2e8f0)" />
+                            <path id="running-path" class="fill-none stroke-indigo-600 stroke-2" d="M 50,10 L 50,90 M 10,50 L 90,50" />
+                        </svg>
+                    </div>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400" id="running-info">Inizia il tracciamento per registrare la tua corsa</p>
+                </div>
+                
+                <!-- Workout Timer Section -->
+                <div id="workout-timer-container" class="glass-panel rounded-3xl p-5 space-y-4 hidden">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i data-lucide="timer" class="w-4 h-4 text-indigo-500"></i> Timer Allenamento
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase">Tempo</label>
+                            <div class="mt-1 flex items-center gap-2">
+                                <span id="timer-minutes" class="font-bold text-3xl">00</span>
+                                <span class="text-[2x]:">:</span>
+                                <span id="timer-seconds" class="font-bold text-3xl">00</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="startTimer()" id="start-timer-btn" class="flex-1 py-2 rounded-xl bg-indigo-600 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-1">
+                                <i data-lucide="play" class="w-3.5 h-3.5"></i> Start
+                            </button>
+                            <button onclick="resetTimer()" id="reset-timer-btn" class="flex-1 py-2 rounded-xl bg-zinc-200 text-zinc-700 font-bold text-sm shadow-sm flex items-center justify-center gap-1">
+                                <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> Reset
+                            </button>
+                        </div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400" id="timer-status">Pronti a iniziare?</p>
+                    </div>
+                </div>
             </section>
 
             <!-- TAB 3: I MIEI PIANI (DIETA & SCHEDA SALVATE) -->
@@ -762,6 +839,31 @@
 
             <button onclick="confirmPassEntry()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
                 <i data-lucide="check" class="w-4 h-4"></i> Conferma Ingresso
+            </button>
+        </div>
+    </div>
+
+    <!-- Force Password Change Modal (First access from new device) -->
+    <div id="force-pass-modal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-lg hidden">
+        <div class="glass-panel w-full max-w-xs rounded-3xl p-6 space-y-4 shadow-2xl text-center">
+            <div class="flex justify-end">
+                <button onclick="closeForcePassModal()" class="text-zinc-400 hover:text-zinc-600 dark:hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="force-profile-avatar" class="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-3xl mx-auto shadow-lg ring-2 ring-indigo-400 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900"></div>
+            <h3 id="force-profile-name" class="font-extrabold text-lg">Forza Cambio Password</h3>
+
+            <p class="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">Questo è il primo accesso da un nuovo dispositivo. Devi impostare una nuova password per completare la configurazione del profilo.</p>
+
+            <div>
+                <label class="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase block text-left mb-1.5">Nuova Password</label>
+                <input type="password" id="force-pass-input" placeholder="••••••••" autocomplete="current-password" class="w-full bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white">
+            </div>
+
+            <button onclick="confirmForcePasswordChange()" class="w-full py-3 rounded-xl glass-button text-white font-bold text-sm flex items-center justify-center gap-2">
+                <i data-lucide="check" class="w-4 h-4"></i> Conferma e Accesso
             </button>
         </div>
     </div>
@@ -1125,6 +1227,11 @@
             bindPersistence();
             openEntryGate();
             initRealtime();
+            // Initialize timer UI
+            document.getElementById('timer-minutes').textContent = '00';
+            document.getElementById('timer-seconds').textContent = '00';
+            document.getElementById('timer-status').textContent = 'Pronti a iniziare?';
+            toggleTimerVisibility();
         });
 
         function toggleTheme() {
@@ -2411,6 +2518,59 @@
             document.getElementById('auth-login-modal').classList.add('hidden');
         }
 
+        function openForcePasswordChange() {
+            pendingPassEmail = null;
+            document.getElementById('profile-pass-modal')?.classList.add('hidden');
+            document.getElementById('auth-login-modal')?.classList.add('hidden');
+            document.getElementById('profile-setup-modal')?.classList.add('hidden');
+            document.getElementById('force-pass-modal')?.classList.remove('hidden');
+            setTimeout(() => document.getElementById('force-pass-input').focus(), 50);
+        }
+
+        function closeForcePassModal() {
+            document.getElementById('force-pass-modal').classList.add('hidden');
+            pendingPassEmail = null;
+        }
+
+        async function confirmForcePasswordChange() {
+            try {
+                const pass = document.getElementById('force-pass-input').value;
+                if (!pass || pass.length < 4) {
+                    showAlert("Password troppo corta", "Minimo 4 caratteri.", true);
+                    return;
+                }
+                if (!pendingPassEmail) {
+                    closeForcePassModal();
+                    showAlert("Errore", "Email profilo non trovata.", true);
+                    return;
+                }
+                // Update password on server
+                const d = await apiFetch('/api/reset-password', { method: 'POST', body: { email: pendingPassEmail, newPassword: pass } });
+                if (d && d.ok) {
+                    // Mark as configured after password change
+                    loadAuth();
+                    const idx = authUsers.findIndex(u => u.email === pendingPassEmail);
+                    if (idx !== -1) {
+                        authUsers[idx].configured = true;
+                        saveAuth();
+                        syncUsersToServer();
+                    }
+                    enterApp({
+                        id: pendingPassEmail,
+                        name: authUsers[idx].name || 'Utente',
+                        emoji: authUsers[idx].emoji || '💪',
+                        colorIndex: typeof authUsers[idx].colorIndex === 'number' ? authUsers[idx].colorIndex : 0,
+                        credential: authUsers[idx].credential || null
+                    });
+                } else {
+                    showAlert("Errore", "Cambio password non riuscito: " + (d && d.message ? d.message : 'riprova'), true);
+                }
+            } catch (err) {
+                closeForcePassModal();
+                showAlert("Errore", (err && err.message) ? err.message : "Operazione non riuscita.", true);
+            }
+        }
+
         function openAdminLogin() {
             closeProfilePicker();
             closeLoginModal();
@@ -2495,7 +2655,8 @@
                     colorIndex: user.colorIndex, credential: user.credential || null
                 });
             } else {
-                openProfileSetup();
+                // First access from new device: force password change
+                openForcePasswordChange();
             }
             } catch (err) {
                 closeLoginModal();
@@ -3330,6 +3491,17 @@
                         lastVideoCheck = data.lastVideo.date;
                     }
                     
+                    // Show all integrated videos in the schedule
+                    if (data.allVideos && Array.isArray(data.allVideos)) {
+                        // Update the video schedule display
+                        renderVideoSchedule(data.allVideos);
+                    }
+                    
+                    // Show running data from another device
+                    if (data.running_sessions && Array.isArray(data.running_sessions)) {
+                        renderRunningSessions(data.running_sessions);
+                    }
+                    
                     if (data.lastProgram && data.lastProgram.date !== lastProgramCheck) {
                         showProgramOverlay(data.lastProgram.title, data.lastProgram.body);
                         notifySystem(data.lastProgram.title, data.lastProgram.body);
@@ -3644,5 +3816,216 @@
             }
         }
     </script>
-</body>
+function renderVideoSchedule(videos) {
+            const container = document.getElementById('video-schedule-container');
+            const list = document.getElementById('video-schedule-list');
+            if (!container || !list) return;
+            
+            if (!videos || videos.length === 0) {
+                container.classList.add('hidden');
+                list.innerHTML = '<p class="text-xs text-zinc-500">Nessun video integrato ancora. L\'admin può aggiungere video dalla scheda workout.</p>';
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            list.innerHTML = '';
+            
+            videos.forEach((vid, i) => {
+                const isYt = /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)/.test(vid.url);
+                const title = vid.title || 'Video senza titolo';
+                const safeTitle = title.length > 30 ? title.substring(0, 30) + '...' : title;
+                const item = document.createElement('div');
+                item.className = 'rounded border-zinc-200 dark:border-zinc-700 p-3 hover:bg-zinc-100/50 dark:hover:bg-zinc-900/50 transition-all cursor-pointer';
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <span class="w-8 h-8 rounded bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-bold ` + (isYt ? 'text-indigo-600' : 'text-emerald-600') + `"><i data-lucide="` + (isYt ? 'youtube' : 'video') + `' class="w-3 h-3"></i></span>
+                        <span class="flex-1 truncate text-[11px] text-zinc-700 dark:text-zinc-300">` + safeTitle + `</span>
+                    </div>
+                    <button class="text-[10px] text-indigo-500 hover:underline mt-1 block">Guarda</button>
+                `;
+                list.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+        
+        function renderRunningSessions(sessions) {
+            const container = document.getElementById('running-tracker-container');
+            if (!container) return;
+            
+            if (!sessions || sessions.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            const lastSession = sessions[0];
+            
+            document.getElementById('running-distance')?.textContent = (lastSession.distance_km || 0).toFixed(1);
+            document.getElementById('running-duration')?.textContent = (lastSession.duration_sec || 0);
+            document.getElementById('running-calories')?.textContent = lastSession.calories || 0;
+            
+            // Simple map display
+            const mapSvg = document.getElementById('running-path');
+            if (mapSvg && lastSession.polyline) {
+                const points = lastSession.polyline.split(';');
+                let path = 'M ' + points[0];
+                for (let i = 1; i < points.length; i++) {
+                    path += ' L ' + points[i];
+                }
+                mapSvg.setAttribute('d', path);
+            }
+        }
+        
+        let timerInterval = null;
+        let timerMinutes = 0;
+        let timerSeconds = 0;
+        let timerRunning = false;
+        
+        function startTimer() {
+            if (timerRunning) return;
+            timerRunning = true;
+            document.getElementById('start-timer-btn')?.classList.add('hidden');
+            document.getElementById('reset-timer-btn')?.classList.add('hidden');
+            
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                if (timerSeconds >= 60) {
+                    timerSeconds = 0;
+                    timerMinutes++;
+                }
+                
+                document.getElementById('timer-minutes').textContent = timerMinutes < 10 ? '0' + timerMinutes : timerMinutes;
+                document.getElementById('timer-seconds').textContent = timerSeconds < 10 ? '0' + timerSeconds : timerSeconds;
+            }, 1000);
+        }
+        
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerRunning = false;
+            timerMinutes = 0;
+            timerSeconds = 0;
+            
+            document.getElementById('start-timer-btn')?.classList.remove('hidden');
+            document.getElementById('reset-timer-btn')?.classList.remove('hidden');
+            
+            document.getElementById('timer-minutes').textContent = '00';
+            document.getElementById('timer-seconds').textContent = '00';
+            document.getElementById('timer-status').textContent = 'Pronti a iniziare?';
+        }
+        
+        function stopTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerRunning = false;
+            
+            document.getElementById('start-timer-btn')?.classList.remove('hidden');
+            document.getElementById('reset-timer-btn')?.classList.remove('hidden');
+        }
+        
+        // ================= RUNNING TRACKER =================
+        let runningInterval = null;
+        let runningStartTime = null;
+        let runningPoints = [];
+        let runningTotalDistance = 0;
+        let runningTotalCalories = 0;
+        let mapViewport = { lat: 41.9028, lng: 12.4964 }; // Roma di default
+        
+        function startRunningTracking() {
+            if (runningInterval) return;
+            
+            runningStartTime = Date.now();
+            runningPoints = [];
+            runningTotalDistance = 0;
+            runningTotalCalories = 0;
+            
+            document.getElementById('start-running-btn')?.classList.add('hidden');
+            document.getElementById('stop-running-btn')?.classList.remove('hidden');
+            document.getElementById('running-info')?.classList.add('hidden');
+            
+            runningInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsedSec = Math.floor((now - runningStartTime) / 1000);
+                
+                // Update UI
+                document.getElementById('running-duration').textContent = elapsedSec;
+                
+                // Calculate approximate distance (simple formula: ~5km/h walking, ~10km/h running)
+                const avgSpeedKmh = 8; // 8 km/h average
+                const elapsedHours = elapsedSec / 3600;
+                runningTotalDistance = (avgSpeedKmh * elapsedHours).toFixed(1);
+                runningTotalCalories = Math.round(5 * elapsedSec / 60); // ~5 cal/min
+                
+                document.getElementById('running-distance').textContent = runningTotalDistance;
+                document.getElementById('running-calories').textContent = runningTotalCalories;
+                
+                // Add a point to the route
+                runningPoints.push({ lat: mapViewport.lat + (Math.random() - 0.5) * 0.01, lng: mapViewport.lng + (Math.random() - 0.5) * 0.01 });
+                renderRunningMap();
+            }, 1000);
+        }
+        
+        function stopRunningTracking() {
+            if (!runningInterval) return;
+            
+            clearInterval(runningInterval);
+            runningInterval = null;
+            
+            document.getElementById('start-running-btn')?.classList.remove('hidden');
+            document.getElementById('stop-running-btn')?.classList.add('hidden');
+            
+            // Save running session to server
+            saveRunningSession();
+            
+            // Show summary
+            document.getElementById('running-info').classList.remove('hidden');
+            document.getElementById('running-info').textContent = `Corsa completata: ${runningTotalDistance} km in ${document.getElementById('running-duration').textContent} sec, ${runningTotalCalories} cal`;
+        }
+        
+        function renderRunningMap() {
+            const mapSvg = document.getElementById('running-path');
+            if (!mapSvg || runningPoints.length < 2) return;
+            
+            // Create a simple polyline path
+            let path = 'M ' + runningPoints[0].lat + ',' + runningPoints[0].lng;
+            for (let i = 1; i < runningPoints.length; i++) {
+                path += ' L ' + runningPoints[i].lat + ',' + runningPoints[i].lng;
+            }
+            mapSvg.setAttribute('d', path);
+        }
+        
+        function saveRunningSession() {
+            if (!currentUser) return;
+            
+            const key = 'gymhouse_running_' + currentUser.email;
+            try {
+                localStorage.setItem(key, JSON.stringify({
+                    distance_km: parseFloat(runningTotalDistance),
+                    duration_sec: parseInt(document.getElementById('running-duration').textContent) || 0,
+                    calories: runningTotalCalories,
+                    polyline: runningPoints.map(p => `${p.lat},${p.lng}`).join(';'),
+                    date: new Date().toLocaleDateString('it-IT')
+                }));
+            } catch (e) {}
+            
+            // Send to server
+            if (serverOnline) {
+                apiFetch('/api/running/' + encodeURIComponent(currentUser.email), {
+                    method: 'POST',
+                    body: {
+                        email: currentUser.email,
+                        distance_km: parseFloat(runningTotalDistance),
+                        duration_sec: Math.floor((Date.now() - runningStartTime) / 1000),
+                        calories: runningTotalCalories,
+                        polyline: runningPoints.map(p => `${p.lat},${p.lng}`).join(';')
+                    }
+                }).then((d) => {
+                    if (d && d.ok) {
+                        lastDataVersion.running = Math.max(lastDataVersion.running, Date.now());
+                        broadcastDataChange('running');
+                    }
+                });
+            }
+        }
+    </body>
 </html>
